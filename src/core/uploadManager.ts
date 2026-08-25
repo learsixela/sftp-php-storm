@@ -259,7 +259,7 @@ export class UploadManager {
           await this.sftpManager.uploadFile(config, abs, remotePath);
           synced.push(item.relativePath);
           uploaded++;
-        } catch {
+        } catch (err: any) {
           failed++;
         }
       }

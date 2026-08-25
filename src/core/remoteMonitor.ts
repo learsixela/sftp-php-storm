@@ -93,7 +93,6 @@ export class RemoteMonitor {
         const localAbs = path.join(root, relPath.split('/').join(path.sep));
 
         if (item.type === 'd') {
-          // Recurse directories up to depth
           const sub = await this.scanRemote(root, remoteItemPath, config);
           results.push(...sub);
         } else {
@@ -110,7 +109,6 @@ export class RemoteMonitor {
             });
           } else {
             const localStat = fs.statSync(localAbs);
-            // If remote is newer by more than 3 seconds
             if (remoteMtimeMs - localStat.mtimeMs > 3000) {
               results.push({
                 relativePath: relPath,

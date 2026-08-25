@@ -85,11 +85,20 @@ export class ChangeTracker {
 
   /**
    * High performance O(1) incremental update when a single file is saved.
-   * Does NOT scan the disk.
+   * If the file is ignored (by .gitignore / .sftpignore / tools / etc.), removes it from pending list.
    */
   public notifyFileSaved(absPath: string): void {
     const rel = this.configManager.getRelativePath(absPath);
-    if (!rel || this.configManager.shouldIgnore(rel)) return;
+    if (!rel) return;
+
+    if (this.configManager.shouldIgnore(rel)) {
+      const idx = this.cachedPending.findIndex(p => p.relativePath === rel);
+      if (idx >= 0) {
+        this.cachedPending.splice(idx, 1);
+        this._onDidChangePending.fire(this.cachedPending);
+      }
+      return;
+    }
 
     const manifest = this.loadManifest();
     if (!manifest) {
@@ -101,7 +110,6 @@ export class ChangeTracker {
     const existingIndex = this.cachedPending.findIndex(p => p.relativePath === rel);
 
     if (!newHash) {
-      // deleted
       if (manifest[rel] && existingIndex === -1) {
         this.cachedPending.push({
           relativePath: rel,
@@ -138,7 +146,6 @@ export class ChangeTracker {
       }
       this._onDidChangePending.fire(this.cachedPending);
     } else if (existingIndex >= 0) {
-      // In sync again
       this.cachedPending.splice(existingIndex, 1);
       this._onDidChangePending.fire(this.cachedPending);
     }
@@ -184,7 +191,6 @@ export class ChangeTracker {
     }
 
     this.saveManifest(manifest);
-    // Remove from cached pending
     this.cachedPending = this.cachedPending.filter(p => !relPaths.includes(p.relativePath));
     this._onDidChangePending.fire(this.cachedPending);
   }
@@ -277,9 +283,10 @@ export class ChangeTracker {
         }
       }
 
-      this.cachedPending = pending;
-      this._onDidChangePending.fire(pending);
-      return pending;
+      // Filter out any ignored files immediately
+      this.cachedPending = pending.filter(p => !this.configManager.shouldIgnore(p.relativePath));
+      this._onDidChangePending.fire(this.cachedPending);
+      return this.cachedPending;
     } finally {
       this.isScanning = false;
     }
@@ -316,7 +323,7 @@ export class ChangeTracker {
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
     this.debounceTimer = setTimeout(() => {
       this.refreshPending();
-    }, 500);
+    }, 400);
   }
 
   private initFileWatchers() {

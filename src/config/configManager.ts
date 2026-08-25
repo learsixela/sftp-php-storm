@@ -171,7 +171,7 @@ export class ConfigManager {
   }
 
   /**
-   * Hardcoded, un-bypassable blacklist for critical security and configuration files.
+   * Hardcoded, un-bypassable blacklist for critical security, configuration, and tools files.
    * Under NO circumstances will these files ever be uploaded to SFTP/FTP.
    */
   public isForbidden(relativePath: string): boolean {
@@ -185,11 +185,14 @@ export class ConfigManager {
     if (segments.includes('.git') || posixPath.startsWith('.git/')) return true;
     if (segments.includes('node_modules')) return true;
 
-    // 2. Sensitive configuration files
+    // 2. Base omission of tools folder (local helper scripts, sftp-sync CLI, etc.)
+    if (segments.includes('tools') || posixPath === 'tools' || posixPath.startsWith('tools/')) return true;
+
+    // 3. Sensitive configuration files
     if (basename === 'sftp.json' || basename === 'sftp.local.json' || basename === 'deployment.json') return true;
     if (basename === '.manifest.json' || basename === '.sftpignore' || basename === '.deploymentignore' || basename === '.gitignore') return true;
 
-    // 3. Security keys and secrets
+    // 4. Security keys and secrets
     if (basename.startsWith('.env')) return true;
     if (basename.endsWith('.pem') || basename.endsWith('.key') || basename.startsWith('id_rsa') || basename.startsWith('id_ed25519')) return true;
 
@@ -199,7 +202,7 @@ export class ConfigManager {
   public shouldIgnore(relativePath: string, customIgnore?: string[]): boolean {
     const posixPath = relativePath.split(path.sep).join('/').replace(/^\//, '');
     
-    // Check hardcoded blacklist first
+    // Check hardcoded blacklist first (including tools, .vscode, .git, etc.)
     if (this.isForbidden(posixPath)) return true;
 
     const segments = posixPath.split('/');
@@ -261,7 +264,7 @@ export class ConfigManager {
   }
 
   private initWatcher() {
-    this.fileWatcher = vscode.workspace.createFileSystemWatcher('**/{.vscode/{sftp,sftp.local,deployment}.json,.gitignore,.sftpignore}');
+    this.fileWatcher = vscode.workspace.createFileSystemWatcher('**/{.vscode/{sftp,sftp.local,deployment}.json,.gitignore,.sftpignore,.deploymentignore}');
     this.fileWatcher.onDidChange(() => this.reloadConfig());
     this.fileWatcher.onDidCreate(() => this.reloadConfig());
     this.fileWatcher.onDidDelete(() => this.reloadConfig());

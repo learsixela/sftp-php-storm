@@ -26989,7 +26989,7 @@ var ConfigManager = class {
     };
   }
   /**
-   * Hardcoded, un-bypassable blacklist for critical security and configuration files.
+   * Hardcoded, un-bypassable blacklist for critical security, configuration, and tools files.
    * Under NO circumstances will these files ever be uploaded to SFTP/FTP.
    */
   isForbidden(relativePath) {
@@ -27003,6 +27003,8 @@ var ConfigManager = class {
     if (segments.includes(".git") || posixPath.startsWith(".git/"))
       return true;
     if (segments.includes("node_modules"))
+      return true;
+    if (segments.includes("tools") || posixPath === "tools" || posixPath.startsWith("tools/"))
       return true;
     if (basename3 === "sftp.json" || basename3 === "sftp.local.json" || basename3 === "deployment.json")
       return true;
@@ -27071,7 +27073,7 @@ var ConfigManager = class {
     return rel;
   }
   initWatcher() {
-    this.fileWatcher = vscode.workspace.createFileSystemWatcher("**/{.vscode/{sftp,sftp.local,deployment}.json,.gitignore,.sftpignore}");
+    this.fileWatcher = vscode.workspace.createFileSystemWatcher("**/{.vscode/{sftp,sftp.local,deployment}.json,.gitignore,.sftpignore,.deploymentignore}");
     this.fileWatcher.onDidChange(() => this.reloadConfig());
     this.fileWatcher.onDidCreate(() => this.reloadConfig());
     this.fileWatcher.onDidDelete(() => this.reloadConfig());
@@ -27399,12 +27401,20 @@ var ChangeTracker = class {
   }
   /**
    * High performance O(1) incremental update when a single file is saved.
-   * Does NOT scan the disk.
+   * If the file is ignored (by .gitignore / .sftpignore / tools / etc.), removes it from pending list.
    */
   notifyFileSaved(absPath) {
     const rel = this.configManager.getRelativePath(absPath);
-    if (!rel || this.configManager.shouldIgnore(rel))
+    if (!rel)
       return;
+    if (this.configManager.shouldIgnore(rel)) {
+      const idx = this.cachedPending.findIndex((p) => p.relativePath === rel);
+      if (idx >= 0) {
+        this.cachedPending.splice(idx, 1);
+        this._onDidChangePending.fire(this.cachedPending);
+      }
+      return;
+    }
     const manifest = this.loadManifest();
     if (!manifest) {
       this.scheduleRefresh();
@@ -27570,9 +27580,9 @@ var ChangeTracker = class {
           }
         }
       }
-      this.cachedPending = pending;
-      this._onDidChangePending.fire(pending);
-      return pending;
+      this.cachedPending = pending.filter((p) => !this.configManager.shouldIgnore(p.relativePath));
+      this._onDidChangePending.fire(this.cachedPending);
+      return this.cachedPending;
     } finally {
       this.isScanning = false;
     }
@@ -27606,7 +27616,7 @@ var ChangeTracker = class {
       clearTimeout(this.debounceTimer);
     this.debounceTimer = setTimeout(() => {
       this.refreshPending();
-    }, 500);
+    }, 400);
   }
   initFileWatchers() {
     const watcher = vscode3.workspace.createFileSystemWatcher("**/*");
@@ -27976,7 +27986,7 @@ var UploadManager = class {
           await this.sftpManager.uploadFile(config, abs, remotePath);
           synced.push(item.relativePath);
           uploaded++;
-        } catch {
+        } catch (err) {
           failed++;
         }
       }
