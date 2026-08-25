@@ -1,0 +1,394 @@
+{
+  "name": "phpstorm-deployment-sync",
+  "displayName": "Deployment & Sync (PhpStorm Style)",
+  "description": "SFTP/SSH Deployment, file comparison and synchronization tool for Antigravity and VS Code, inspired by PhpStorm.",
+  "version": "1.0.0",
+  "publisher": "israel",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "deployment",
+    "sftp",
+    "sync",
+    "phpstorm",
+    "upload",
+    "compare"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "deployment.upload",
+        "title": "Upload to Deployed Server",
+        "category": "Deployment",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "deployment.uploadSelection",
+        "title": "Upload to...",
+        "category": "Deployment",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "deployment.uploadOpenFiles",
+        "title": "Upload All Opened Files",
+        "category": "Deployment",
+        "icon": "$(files)"
+      },
+      {
+        "command": "deployment.uploadChangedFiles",
+        "title": "Upload Changed / Modified Files",
+        "category": "Deployment",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "deployment.download",
+        "title": "Download from Deployed Server",
+        "category": "Deployment",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "deployment.downloadSelection",
+        "title": "Download from...",
+        "category": "Deployment",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "deployment.compareWithRemote",
+        "title": "Compare with Deployed Version",
+        "category": "Deployment",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "deployment.syncWithRemote",
+        "title": "Sync with Deployed...",
+        "category": "Deployment",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "deployment.editRemoteFile",
+        "title": "Edit Remote File",
+        "category": "Deployment",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "deployment.testConnection",
+        "title": "Test Connection",
+        "category": "Deployment",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "deployment.initBaseline",
+        "title": "Initialize Sync Baseline (Manifest)",
+        "category": "Deployment",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "deployment.editConfig",
+        "title": "Open Deployment Configuration (.vscode/sftp.json)",
+        "category": "Deployment",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "deployment.refreshPending",
+        "title": "Refresh Pending Changes",
+        "category": "Deployment",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "deployment.checkRemoteChanges",
+        "title": "Check for Remote Changes (Server Poll)",
+        "category": "Deployment",
+        "icon": "$(cloud-download)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "deployment.upload"
+        },
+        {
+          "command": "deployment.uploadSelection"
+        },
+        {
+          "command": "deployment.uploadOpenFiles"
+        },
+        {
+          "command": "deployment.uploadChangedFiles"
+        },
+        {
+          "command": "deployment.download"
+        },
+        {
+          "command": "deployment.downloadSelection"
+        },
+        {
+          "command": "deployment.compareWithRemote"
+        },
+        {
+          "command": "deployment.syncWithRemote"
+        },
+        {
+          "command": "deployment.editRemoteFile"
+        },
+        {
+          "command": "deployment.testConnection"
+        },
+        {
+          "command": "deployment.initBaseline"
+        },
+        {
+          "command": "deployment.editConfig"
+        },
+        {
+          "command": "deployment.checkRemoteChanges"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "deployment/explorerSubmenu",
+          "group": "7_modification@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "submenu": "deployment/editorSubmenu",
+          "group": "1_modification@1"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "submenu": "deployment/editorSubmenu",
+          "group": "1_modification@1"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "deployment.uploadChangedFiles",
+          "when": "view == deployment-pending-changes",
+          "group": "navigation@1"
+        },
+        {
+          "command": "deployment.refreshPending",
+          "when": "view == deployment-pending-changes",
+          "group": "navigation@2"
+        },
+        {
+          "command": "deployment.testConnection",
+          "when": "view == deployment-servers",
+          "group": "navigation@1"
+        },
+        {
+          "command": "deployment.editConfig",
+          "when": "view == deployment-servers",
+          "group": "navigation@2"
+        },
+        {
+          "command": "deployment.checkRemoteChanges",
+          "when": "view == deployment-pending-changes",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "deployment.upload",
+          "when": "view == deployment-pending-changes",
+          "group": "inline@1"
+        },
+        {
+          "command": "deployment.compareWithRemote",
+          "when": "view == deployment-pending-changes",
+          "group": "inline@2"
+        }
+      ],
+      "deployment/explorerSubmenu": [
+        {
+          "command": "deployment.upload",
+          "group": "1_transfer@1"
+        },
+        {
+          "command": "deployment.uploadSelection",
+          "group": "1_transfer@2"
+        },
+        {
+          "command": "deployment.uploadOpenFiles",
+          "group": "1_transfer@3"
+        },
+        {
+          "command": "deployment.uploadChangedFiles",
+          "group": "1_transfer@4"
+        },
+        {
+          "command": "deployment.download",
+          "group": "2_download@1"
+        },
+        {
+          "command": "deployment.downloadSelection",
+          "group": "2_download@2"
+        },
+        {
+          "command": "deployment.compareWithRemote",
+          "group": "3_diff@1"
+        },
+        {
+          "command": "deployment.syncWithRemote",
+          "group": "3_diff@2"
+        },
+        {
+          "command": "deployment.editRemoteFile",
+          "group": "4_edit@1"
+        }
+      ],
+      "deployment/editorSubmenu": [
+        {
+          "command": "deployment.upload",
+          "group": "1_transfer@1"
+        },
+        {
+          "command": "deployment.uploadOpenFiles",
+          "group": "1_transfer@2"
+        },
+        {
+          "command": "deployment.uploadChangedFiles",
+          "group": "1_transfer@3"
+        },
+        {
+          "command": "deployment.download",
+          "group": "2_download@1"
+        },
+        {
+          "command": "deployment.compareWithRemote",
+          "group": "3_diff@1"
+        },
+        {
+          "command": "deployment.syncWithRemote",
+          "group": "3_diff@2"
+        },
+        {
+          "command": "deployment.editRemoteFile",
+          "group": "4_edit@1"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "deployment/explorerSubmenu",
+        "label": "Deployment",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "id": "deployment/editorSubmenu",
+        "label": "Deployment",
+        "icon": "$(cloud-upload)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "deployment-view-container",
+          "title": "Deployment",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "deployment-view-container": [
+        {
+          "id": "deployment-servers",
+          "name": "Servers",
+          "type": "tree"
+        },
+        {
+          "id": "deployment-pending-changes",
+          "name": "Pending Changes (Modified)",
+          "type": "tree"
+        },
+        {
+          "id": "deployment-remote-explorer",
+          "name": "Remote File Explorer",
+          "type": "tree"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "deployment.upload",
+        "key": "ctrl+alt+u",
+        "mac": "cmd+alt+u"
+      },
+      {
+        "command": "deployment.uploadOpenFiles",
+        "key": "ctrl+alt+shift+u",
+        "mac": "cmd+alt+shift+u"
+      },
+      {
+        "command": "deployment.compareWithRemote",
+        "key": "ctrl+alt+d",
+        "mac": "cmd+alt+d"
+      },
+      {
+        "command": "deployment.syncWithRemote",
+        "key": "ctrl+alt+s",
+        "mac": "cmd+alt+s"
+      }
+    ],
+    "configuration": {
+      "title": "Deployment & Sync",
+      "properties": {
+        "deployment.uploadOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically upload file to deployed server on save (if enabled in sftp.json or here)."
+        },
+        "deployment.confirmBeforeSync": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask confirmation before batch uploading changed files."
+        },
+        "deployment.showNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show success notifications after uploading."
+        },
+        "deployment.useGitIgnore": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically exclude files listed in .gitignore from being uploaded."
+        },
+        "deployment.remotePollingInterval": {
+          "type": "number",
+          "default": 60,
+          "description": "Interval in seconds to check server for remote modifications (0 to disable)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "build": "node esbuild.js",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/ssh2": "^1.15.5",
+    "@types/ssh2-sftp-client": "^9.0.6",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.24.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "jsonc-parser": "^3.3.1",
+    "ssh2": "^1.15.0",
+    "ssh2-sftp-client": "^10.0.3"
+  }
+}
