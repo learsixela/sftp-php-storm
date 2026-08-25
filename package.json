@@ -20,7 +20,25 @@
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:deployment.upload",
+    "onCommand:deployment.uploadSelection",
+    "onCommand:deployment.uploadOpenFiles",
+    "onCommand:deployment.uploadChangedFiles",
+    "onCommand:deployment.download",
+    "onCommand:deployment.downloadSelection",
+    "onCommand:deployment.compareWithRemote",
+    "onCommand:deployment.syncWithRemote",
+    "onCommand:deployment.editRemoteFile",
+    "onCommand:deployment.testConnection",
+    "onCommand:deployment.checkRemoteChanges",
+    "onCommand:deployment.initBaseline",
+    "onCommand:deployment.editConfig",
+    "onCommand:deployment.refreshPending",
+    "onFileSystem:deployment-remote",
+    "onView:deployment-servers",
+    "onView:deployment-pending-changes",
+    "onView:deployment-remote-explorer"
   ],
   "contributes": {
     "commands": [
