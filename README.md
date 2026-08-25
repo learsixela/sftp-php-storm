@@ -7,12 +7,14 @@ Una extensión profesional de despliegue, comparación y sincronización SFTP/SS
 ## ✨ Características Principales
 
 - ⬆️ **Menús Contextuales (Estilo PhpStorm):** Clic derecho en cualquier archivo, pestaña o carpeta para subir, descargar, comparar o sincronizar.
+- ⬇️ **Download & Mirror from Deployed Server (Reconciliación):** Descarga archivos nuevos o modificados del servidor y **elimina de forma segura (enviando a la Papelera)** los archivos y carpetas locales huérfanos que hayan sido movidos, renombrados o borrados en el servidor remoto.
+- 📁 **Descarga Recursiva de Carpetas:** Soporte nativo para descargar carpetas completas respetando reglas de ignorados.
 - ⬆️ **Upload All Opened Files:** Sube simultáneamente todas las pestañas de archivos abiertas en el editor (`Ctrl+Alt+Shift+U`).
 - 🔄 **Upload Changed / Modified Files:** Detección de archivos modificados por hash SHA-256 baseline para subir sólo lo que cambió.
 - ↔️ **Compare with Deployed Version:** Visor de diferencias nativo lado a lado (`vscode.diff`) en memoria (`deployment-remote://`) sin generar archivos temporales en disco (`Ctrl+Alt+D`).
 - 📁 **Panel Lateral Completo:** Lista de servidores, lista de cambios pendientes en tiempo real y explorador de archivos remotos.
 - 🔒 **Seguridad Blindada:**
-  - Bloqueo físico en el núcleo para evitar subir `.vscode`, `sftp.json`, `.git`, `.env` o archivos de claves.
+  - Bloqueo físico en el núcleo para evitar subir o borrar por error `.vscode`, `sftp.json`, `.git`, `.env` o archivos de claves.
   - Almacenamiento seguro de contraseñas y frases de paso en el **Llavero de Windows / VS Code SecretStorage** (no requiere contraseñas en texto plano).
   - Soporte nativo para `.gitignore`, `.sftpignore` y variables de entorno.
 - ⚡ **Caché Incremental O(1):** Rendimiento instantáneo al guardar archivos sin bloqueos en proyectos grandes.
@@ -55,7 +57,7 @@ Edita tu archivo `.vscode/sftp.json` con los datos de tu servidor:
 #### 📖 Explicación de los Campos:
 | Campo | Descripción |
 |---|---|
-| `name` | Nombre descriptivo del servidor (ej. `"Producción"`, `"Staging"`, `"Kultrun"`). |
+| `name` | Nombre descriptivo del servidor (ej. `"Producción"`, `"Staging"`, `"Pangea"`). |
 | `host` | Dirección IP o dominio del servidor (ej. `"192.168.1.100"` o `"servidor.empresa.cl"`). |
 | `port` | Puerto SSH/SFTP (por defecto `22`). |
 | `username` | Nombre de usuario en el servidor. |
@@ -138,21 +140,24 @@ Puedes definir múltiples servidores usando un array o la clave `"profiles"`:
 
 ### Paso 5: ¡Comenzar a Desplegar y Sincronizar!
 
-- **Subir un archivo o carpeta:** Clic derecho sobre el archivo ➔ `Deployment` ➔ `Upload to Deployed Server` (o `Ctrl+Alt+U`).
-- **Subir todas las pestañas abiertas:** `Ctrl+Alt+Shift+U` o menú contextual `Upload All Opened Files`.
-- **Comparar archivo local con el servidor:** Clic derecho ➔ `Compare with Deployed Version` (o `Ctrl+Alt+D`).
-- **Sincronizar cambios modificados:** Presiona `Ctrl+Alt+S` o haz clic en el botón de la barra de estado inferior.
+- **Subir un archivo o carpeta:** Clic derecho sobre el archivo ➔ `Deployment` ➔ `Upload to Deployed Server` (o `Ctrl+Alt+U` / `Cmd+Alt+U`).
+- **Descargar archivo o carpeta:** Clic derecho ➔ `Deployment` ➔ `Download from Deployed Server`.
+- **⬇️ Reconciliar cambios / Mirror (Eliminar huérfanos locales):** Clic derecho sobre una carpeta o la raíz ➔ `Deployment` ➔ **`Download & Mirror from Deployed Server (Delete Local Orphans)`**.
+  > 💡 *Ideal cuando en el servidor se movieron o renombraron carpetas/archivos. Descarga la nueva estructura y mueve a la papelera los archivos locales antiguos que ya no existen en el servidor.*
+- **Subir todas las pestañas abiertas:** `Ctrl+Alt+Shift+U` / `Cmd+Alt+Shift+U` o menú contextual `Upload All Opened Files`.
+- **Comparar archivo local con el servidor:** Clic derecho ➔ `Compare with Deployed Version` (o `Ctrl+Alt+D` / `Cmd+Alt+D`).
+- **Sincronizar cambios modificados:** Presiona `Ctrl+Alt+S` / `Cmd+Alt+S` o haz clic en el botón de la barra de estado inferior.
 
 ---
 
 ## ⌨️ Atajos de Teclado
 
-| Atajo | Acción |
-|---|---|
-| `Ctrl + Alt + U` | Subir archivo activo al servidor |
-| `Ctrl + Alt + Shift + U` | Subir todas las pestañas abiertas |
-| `Ctrl + Alt + D` | Comparar archivo activo con el servidor (Diff lado a lado) |
-| `Ctrl + Alt + S` | Sincronizar archivos modificados con el servidor |
+| Atajo (Windows/Linux) | Atajo (macOS) | Acción |
+|---|---|---|
+| `Ctrl + Alt + U` | `Cmd + Alt + U` | Subir archivo activo al servidor |
+| `Ctrl + Alt + Shift + U` | `Cmd + Alt + Shift + U` | Subir todas las pestañas abiertas |
+| `Ctrl + Alt + D` | `Cmd + Alt + D` | Comparar archivo activo con el servidor (Diff lado a lado) |
+| `Ctrl + Alt + S` | `Cmd + Alt + S` | Sincronizar archivos modificados con el servidor |
 
 ---
 

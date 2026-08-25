@@ -27,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
   const remoteMonitor = new RemoteMonitor(configManager, sftpManager);
   const uploadManager = new UploadManager(configManager, sftpManager, changeTracker);
   const diffManager = new DiffManager(configManager, sftpManager);
-  const syncEngine = new SyncEngine(configManager, sftpManager);
+  const syncEngine = new SyncEngine(configManager, sftpManager, changeTracker);
   const remoteFsProvider = new RemoteFsProvider(sftpManager, configManager);
   const statusBar = new StatusBarManager(configManager, changeTracker, remoteMonitor);
 
@@ -99,12 +99,22 @@ export function activate(context: vscode.ExtensionContext) {
       await uploadManager.downloadTarget(uri, true);
     }),
 
-    // 7. Compare with Remote
+    // 7. Mirror Download (Delete local orphans)
+    vscode.commands.registerCommand('deployment.mirrorDownload', async (uri?: vscode.Uri) => {
+      await syncEngine.mirrorRemoteToLocal(uri, false);
+    }),
+
+    // 8. Mirror Download from... (Select server)
+    vscode.commands.registerCommand('deployment.mirrorDownloadSelection', async (uri?: vscode.Uri) => {
+      await syncEngine.mirrorRemoteToLocal(uri, true);
+    }),
+
+    // 9. Compare with Remote
     vscode.commands.registerCommand('deployment.compareWithRemote', async (uri?: vscode.Uri) => {
       await diffManager.compareWithRemote(uri);
     }),
 
-    // 8. Sync with Deployed...
+    // 10. Sync with Deployed...
     vscode.commands.registerCommand('deployment.syncWithRemote', async (uri?: vscode.Uri) => {
       await syncEngine.syncWithRemote(uri);
     }),

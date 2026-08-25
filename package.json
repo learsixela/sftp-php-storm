@@ -27,6 +27,8 @@
     "onCommand:deployment.uploadChangedFiles",
     "onCommand:deployment.download",
     "onCommand:deployment.downloadSelection",
+    "onCommand:deployment.mirrorDownload",
+    "onCommand:deployment.mirrorDownloadSelection",
     "onCommand:deployment.compareWithRemote",
     "onCommand:deployment.syncWithRemote",
     "onCommand:deployment.editRemoteFile",
@@ -77,6 +79,18 @@
         "title": "Download from...",
         "category": "Deployment",
         "icon": "$(cloud-download)"
+      },
+      {
+        "command": "deployment.mirrorDownload",
+        "title": "Download & Mirror from Deployed Server (Delete Local Orphans)",
+        "category": "Deployment",
+        "icon": "$(mirror)"
+      },
+      {
+        "command": "deployment.mirrorDownloadSelection",
+        "title": "Download & Mirror from... (Delete Local Orphans)",
+        "category": "Deployment",
+        "icon": "$(mirror)"
       },
       {
         "command": "deployment.compareWithRemote",
@@ -146,6 +160,12 @@
         },
         {
           "command": "deployment.downloadSelection"
+        },
+        {
+          "command": "deployment.mirrorDownload"
+        },
+        {
+          "command": "deployment.mirrorDownloadSelection"
         },
         {
           "command": "deployment.compareWithRemote"
@@ -252,6 +272,14 @@
           "group": "2_download@2"
         },
         {
+          "command": "deployment.mirrorDownload",
+          "group": "2_download@3"
+        },
+        {
+          "command": "deployment.mirrorDownloadSelection",
+          "group": "2_download@4"
+        },
+        {
           "command": "deployment.compareWithRemote",
           "group": "3_diff@1"
         },
@@ -280,6 +308,10 @@
         {
           "command": "deployment.download",
           "group": "2_download@1"
+        },
+        {
+          "command": "deployment.mirrorDownload",
+          "group": "2_download@2"
         },
         {
           "command": "deployment.compareWithRemote",

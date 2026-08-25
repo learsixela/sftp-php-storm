@@ -6634,7 +6634,7 @@ var require_crypto = __commonJS({
       MAC_INFO,
       bindingAvailable: !!binding,
       init: (() => {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve2, reject) => {
           try {
             POLY1305_WASM_MODULE = await require_poly1305()();
             POLY1305_RESULT_MALLOC = POLY1305_WASM_MODULE._malloc(16);
@@ -6646,7 +6646,7 @@ var require_crypto = __commonJS({
           } catch (ex) {
             return reject(ex);
           }
-          resolve();
+          resolve2();
         });
       })(),
       NullCipher,
@@ -7899,7 +7899,7 @@ var require_agent = __commonJS({
     "use strict";
     var { Socket } = require("net");
     var { Duplex } = require("stream");
-    var { resolve } = require("path");
+    var { resolve: resolve2 } = require("path");
     var { readFile } = require("fs");
     var { execFile, spawn } = require("child_process");
     var { isParsedKey, parseKey } = require_keyParser();
@@ -8035,7 +8035,7 @@ var require_agent = __commonJS({
       const RET_ERR_BINSTDIN = 13;
       const RET_ERR_BINSTDOUT = 14;
       const RET_ERR_BADLEN = 15;
-      const EXEPATH = resolve(__dirname, "..", "util/pagent.exe");
+      const EXEPATH = resolve2(__dirname, "..", "util/pagent.exe");
       const ERROR = {
         [RET_ERR_BADARGS]: new Error("Invalid pagent.exe arguments"),
         [RET_ERR_UNAVAILABLE]: new Error("Pageant is not running"),
@@ -21876,14 +21876,14 @@ var require_async_iterator = __commonJS({
       };
     }
     function readAndResolve(iter) {
-      var resolve = iter[kLastResolve];
-      if (resolve !== null) {
+      var resolve2 = iter[kLastResolve];
+      if (resolve2 !== null) {
         var data = iter[kStream].read();
         if (data !== null) {
           iter[kLastPromise] = null;
           iter[kLastResolve] = null;
           iter[kLastReject] = null;
-          resolve(createIterResult(data, false));
+          resolve2(createIterResult(data, false));
         }
       }
     }
@@ -21891,13 +21891,13 @@ var require_async_iterator = __commonJS({
       process.nextTick(readAndResolve, iter);
     }
     function wrapForNext(lastPromise, iter) {
-      return function(resolve, reject) {
+      return function(resolve2, reject) {
         lastPromise.then(function() {
           if (iter[kEnded]) {
-            resolve(createIterResult(void 0, true));
+            resolve2(createIterResult(void 0, true));
             return;
           }
-          iter[kHandlePromise](resolve, reject);
+          iter[kHandlePromise](resolve2, reject);
         }, reject);
       };
     }
@@ -21917,12 +21917,12 @@ var require_async_iterator = __commonJS({
           return Promise.resolve(createIterResult(void 0, true));
         }
         if (this[kStream].destroyed) {
-          return new Promise(function(resolve, reject) {
+          return new Promise(function(resolve2, reject) {
             process.nextTick(function() {
               if (_this[kError]) {
                 reject(_this[kError]);
               } else {
-                resolve(createIterResult(void 0, true));
+                resolve2(createIterResult(void 0, true));
               }
             });
           });
@@ -21945,13 +21945,13 @@ var require_async_iterator = __commonJS({
       return this;
     }), _defineProperty(_Object$setPrototypeO, "return", function _return() {
       var _this2 = this;
-      return new Promise(function(resolve, reject) {
+      return new Promise(function(resolve2, reject) {
         _this2[kStream].destroy(null, function(err) {
           if (err) {
             reject(err);
             return;
           }
-          resolve(createIterResult(void 0, true));
+          resolve2(createIterResult(void 0, true));
         });
       });
     }), _Object$setPrototypeO), AsyncIteratorPrototype);
@@ -21973,15 +21973,15 @@ var require_async_iterator = __commonJS({
         value: stream._readableState.endEmitted,
         writable: true
       }), _defineProperty(_Object$create, kHandlePromise, {
-        value: function value(resolve, reject) {
+        value: function value(resolve2, reject) {
           var data = iterator[kStream].read();
           if (data) {
             iterator[kLastPromise] = null;
             iterator[kLastResolve] = null;
             iterator[kLastReject] = null;
-            resolve(createIterResult(data, false));
+            resolve2(createIterResult(data, false));
           } else {
-            iterator[kLastResolve] = resolve;
+            iterator[kLastResolve] = resolve2;
             iterator[kLastReject] = reject;
           }
         },
@@ -22000,12 +22000,12 @@ var require_async_iterator = __commonJS({
           iterator[kError] = err;
           return;
         }
-        var resolve = iterator[kLastResolve];
-        if (resolve !== null) {
+        var resolve2 = iterator[kLastResolve];
+        if (resolve2 !== null) {
           iterator[kLastPromise] = null;
           iterator[kLastResolve] = null;
           iterator[kLastReject] = null;
-          resolve(createIterResult(void 0, true));
+          resolve2(createIterResult(void 0, true));
         }
         iterator[kEnded] = true;
       });
@@ -22020,7 +22020,7 @@ var require_async_iterator = __commonJS({
 var require_from = __commonJS({
   "node_modules/readable-stream/lib/internal/streams/from.js"(exports2, module2) {
     "use strict";
-    function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
+    function asyncGeneratorStep(gen, resolve2, reject, _next, _throw, key, arg) {
       try {
         var info = gen[key](arg);
         var value = info.value;
@@ -22029,7 +22029,7 @@ var require_from = __commonJS({
         return;
       }
       if (info.done) {
-        resolve(value);
+        resolve2(value);
       } else {
         Promise.resolve(value).then(_next, _throw);
       }
@@ -22037,13 +22037,13 @@ var require_from = __commonJS({
     function _asyncToGenerator(fn) {
       return function() {
         var self2 = this, args = arguments;
-        return new Promise(function(resolve, reject) {
+        return new Promise(function(resolve2, reject) {
           var gen = fn.apply(self2, args);
           function _next(value) {
-            asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
+            asyncGeneratorStep(gen, resolve2, reject, _next, _throw, "next", value);
           }
           function _throw(err) {
-            asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
+            asyncGeneratorStep(gen, resolve2, reject, _next, _throw, "throw", err);
           }
           _next(void 0);
         });
@@ -24207,7 +24207,7 @@ var require_promise_retry = __commonJS({
         fn = temp;
       }
       operation = retry.operation(options);
-      return new Promise(function(resolve, reject) {
+      return new Promise(function(resolve2, reject) {
         operation.attempt(function(number) {
           Promise.resolve().then(function() {
             return fn(function(err) {
@@ -24216,7 +24216,7 @@ var require_promise_retry = __commonJS({
               }
               throw errcode(new Error("Retrying"), "EPROMISERETRY", { retried: err });
             }, number);
-          }).then(resolve, function(err) {
+          }).then(resolve2, function(err) {
             if (isRetryError(err)) {
               err = err.retried;
               if (operation.retry(err || new Error())) {
@@ -24460,13 +24460,13 @@ var require_utils3 = __commonJS({
       return true;
     }
     function sleep(ms) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve2, reject) => {
         try {
           if (Number.isNaN(Number.parseInt(ms)) || ms < 0) {
             reject("Argument must be a number >= 0");
           } else {
             setTimeout(() => {
-              resolve(true);
+              resolve2(true);
             }, ms);
           }
         } catch (err) {
@@ -24621,11 +24621,11 @@ var require_src = __commonJS({
        */
       getConnection(config) {
         let doReady, listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           listeners = addTempListeners(this, "getConnection", reject);
           doReady = () => {
             this.debugMsg("getConnection ready listener: got connection - promise resolved");
-            resolve(true);
+            resolve2(true);
           };
           this.on("ready", doReady);
           try {
@@ -24640,13 +24640,13 @@ var require_src = __commonJS({
         });
       }
       getSftpChannel() {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           this.client.sftp((err, sftp) => {
             if (err) {
               reject(this.fmtError(err, "getSftpChannel", err.code));
             } else {
               this.sftp = sftp;
-              resolve(sftp);
+              resolve2(sftp);
             }
           });
         });
@@ -24731,7 +24731,7 @@ var require_src = __commonJS({
        */
       realPath(remotePath, addListeners = true) {
         let listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "realPath", reject);
           }
@@ -24740,14 +24740,14 @@ var require_src = __commonJS({
             if (err) {
               if (err.code === 2) {
                 this.debugMsg('realPath <- ""');
-                resolve("");
+                resolve2("");
               } else {
                 this.debugMsg(`${err.message} ${remotePath}`, "realPath");
                 reject(this.fmtError(`${err.message} ${remotePath}`, "realPath", err.code));
               }
             }
             this.debugMsg(`realPath <- ${absPath}`);
-            resolve(absPath);
+            resolve2(absPath);
           });
         }).finally(() => {
           if (addListeners) {
@@ -24776,7 +24776,7 @@ var require_src = __commonJS({
        */
       _xstat(cmd, aPath, addListeners = true) {
         let listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           const cb = (err, stats) => {
             if (err) {
               if (err.code === 2 || err.code === 4) {
@@ -24801,7 +24801,7 @@ var require_src = __commonJS({
                 isSocket: stats.isSocket()
               };
               this.debugMsg("_xstat: result = ", result);
-              resolve(result);
+              resolve2(result);
             }
           };
           if (addListeners) {
@@ -24905,7 +24905,7 @@ var require_src = __commonJS({
        */
       list(remotePath, filter, addListeners = true) {
         let listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "list", reject);
           }
@@ -24933,9 +24933,9 @@ var require_src = __commonJS({
                   };
                 });
                 if (filter) {
-                  resolve(newList.filter((item) => filter(item)));
+                  resolve2(newList.filter((item) => filter(item)));
                 } else {
-                  resolve(newList);
+                  resolve2(newList);
                 }
               }
             });
@@ -24968,7 +24968,7 @@ var require_src = __commonJS({
        */
       get(remotePath, dst, options, addListeners = true) {
         let listeners, rdr, wtr;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "get", reject);
           }
@@ -24991,7 +24991,7 @@ var require_src = __commonJS({
             if (dst === void 0) {
               this.debugMsg("get resolving buffer of data");
               wtr = concat((buff) => {
-                resolve(buff);
+                resolve2(buff);
               });
             } else if (typeof dst === "string") {
               this.debugMsg("get returning local file");
@@ -25023,10 +25023,10 @@ var require_src = __commonJS({
             rdr.once("end", () => {
               if (typeof dst === "string") {
                 this.debugMsg("get: resolving with dst filename");
-                resolve(dst);
+                resolve2(dst);
               } else if (dst !== void 0) {
                 this.debugMsg("get: resolving with writer stream object");
-                resolve(wtr);
+                resolve2(wtr);
               }
             });
             rdr.pipe(wtr, options.pipeOptions);
@@ -25053,7 +25053,7 @@ var require_src = __commonJS({
        */
       _fastGet(rPath, lPath, opts, addListeners = true) {
         let listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "_fastGet", reject);
           }
@@ -25062,7 +25062,7 @@ var require_src = __commonJS({
               if (err) {
                 reject(this.fmtError(`${err.message} Remote: ${rPath} Local: ${lPath}`));
               }
-              resolve(`${rPath} was successfully download to ${lPath}!`);
+              resolve2(`${rPath} was successfully download to ${lPath}!`);
             });
           }
         }).finally(() => {
@@ -25111,7 +25111,7 @@ var require_src = __commonJS({
        */
       _fastPut(lPath, rPath, opts, addListeners = true) {
         let listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "_fastPut", reject);
           }
@@ -25126,7 +25126,7 @@ var require_src = __commonJS({
                   )
                 );
               }
-              resolve(`${lPath} was successfully uploaded to ${rPath}!`);
+              resolve2(`${lPath} was successfully uploaded to ${rPath}!`);
             });
           }
         }).finally(() => {
@@ -25176,7 +25176,7 @@ var require_src = __commonJS({
        */
       _put(lPath, rPath, opts, addListeners = true) {
         let listeners, wtr, rdr;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "_put", reject);
           }
@@ -25197,7 +25197,7 @@ var require_src = __commonJS({
               );
             });
             wtr.once("close", () => {
-              resolve(`Uploaded data stream to ${rPath}`);
+              resolve2(`Uploaded data stream to ${rPath}`);
             });
             if (lPath instanceof Buffer) {
               this.debugMsg("put source is a buffer");
@@ -25249,7 +25249,7 @@ var require_src = __commonJS({
        */
       _append(input, rPath, opts, addListeners = true) {
         let listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "_append", reject);
           }
@@ -25261,7 +25261,7 @@ var require_src = __commonJS({
               reject(this.fmtError(`${err.message} ${rPath}`, "append", err.code));
             });
             stream.on("close", () => {
-              resolve(`Appended data to ${rPath}`);
+              resolve2(`Appended data to ${rPath}`);
             });
             if (input instanceof Buffer) {
               stream.write(input);
@@ -25309,7 +25309,7 @@ var require_src = __commonJS({
        */
       _doMkdir(p, addListeners = true) {
         let listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "_doMkdir", reject);
           }
@@ -25335,7 +25335,7 @@ var require_src = __commonJS({
                 reject(this.fmtError(`${err.message} ${p}`, "_doMkdir", err.code));
               }
             } else {
-              resolve(`${p} directory created`);
+              resolve2(`${p} directory created`);
             }
           });
         }).finally(() => {
@@ -25399,14 +25399,14 @@ var require_src = __commonJS({
       async rmdir(remoteDir, recursive = false) {
         const _rmdir = (dir) => {
           let listeners;
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve2, reject) => {
             listeners = addTempListeners(this, "_rmdir", reject);
             this.debugMsg(`_rmdir: dir = ${dir}`);
             this.sftp.rmdir(dir, (err) => {
               if (err) {
                 reject(this.fmtError(`${err.message} ${dir}`, "rmdir", err.code));
               }
-              resolve("Successfully removed directory");
+              resolve2("Successfully removed directory");
             });
           }).finally(() => {
             removeTempListeners(this, listeners, "_rmdir");
@@ -25414,14 +25414,14 @@ var require_src = __commonJS({
         };
         const _delFiles = (path11, fileList) => {
           let listeners;
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve2, reject) => {
             listeners = addTempListeners(this, "_delFiles", reject);
             this.debugMsg(`_delFiles: path = ${path11} fileList = ${fileList}`);
             const pList = [];
             for (const f of fileList) {
               pList.push(this.delete(`${path11}/${f.name}`, true, false));
             }
-            resolve(pList);
+            resolve2(pList);
           }).then((p) => {
             return Promise.all(p);
           }).finally(() => {
@@ -25483,19 +25483,19 @@ var require_src = __commonJS({
        */
       delete(remotePath, notFoundOK = false, addListeners = true) {
         let listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "delete", reject);
           }
           this.sftp.unlink(remotePath, (err) => {
             if (err) {
               if (notFoundOK && err.code === 2) {
-                resolve(`Successfully deleted ${remotePath}`);
+                resolve2(`Successfully deleted ${remotePath}`);
               } else {
                 reject(this.fmtError(`${err.message} ${remotePath}`, "delete", err.code));
               }
             }
-            resolve(`Successfully deleted ${remotePath}`);
+            resolve2(`Successfully deleted ${remotePath}`);
           });
         }).finally(() => {
           if (addListeners) {
@@ -25516,7 +25516,7 @@ var require_src = __commonJS({
        */
       rename(fPath, tPath, addListeners = true) {
         let listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "rename", reject);
           }
@@ -25531,7 +25531,7 @@ var require_src = __commonJS({
                   )
                 );
               }
-              resolve(`Successfully renamed ${fPath} to ${tPath}`);
+              resolve2(`Successfully renamed ${fPath} to ${tPath}`);
             });
           }
         }).finally(() => {
@@ -25554,7 +25554,7 @@ var require_src = __commonJS({
        */
       posixRename(fPath, tPath, addListeners = true) {
         let listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "posixRename", reject);
           }
@@ -25569,7 +25569,7 @@ var require_src = __commonJS({
                   )
                 );
               }
-              resolve(`Successful POSIX rename ${fPath} to ${tPath}`);
+              resolve2(`Successful POSIX rename ${fPath} to ${tPath}`);
             });
           }
         }).finally(() => {
@@ -25589,7 +25589,7 @@ var require_src = __commonJS({
        */
       chmod(rPath, mode, addListeners = true) {
         let listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (addListeners) {
             listeners = addTempListeners(this, "chmod", reject);
           }
@@ -25598,7 +25598,7 @@ var require_src = __commonJS({
               if (err) {
                 reject(this.fmtError(`${err.message} ${rPath}`, "_chmod", err.code));
               }
-              resolve("Successfully change file mode");
+              resolve2("Successfully change file mode");
             });
           }
         }).finally(() => {
@@ -25890,7 +25890,7 @@ var require_src = __commonJS({
        * @returns {String}.
        */
       _rcopy(srcPath, dstPath) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           const ws = this.sftp.createWriteStream(dstPath);
           const rs = this.sftp.createReadStream(srcPath);
           ws.on("error", (err) => {
@@ -25900,7 +25900,7 @@ var require_src = __commonJS({
             reject(this.fmtError(`${err.message} ${srcPath}`, "_rcopy"));
           });
           ws.on("close", () => {
-            resolve(`${srcPath} copied to ${dstPath}`);
+            resolve2(`${srcPath} copied to ${dstPath}`);
           });
           rs.pipe(ws);
         });
@@ -25947,20 +25947,20 @@ var require_src = __commonJS({
        */
       end() {
         let endCloseHandler, listeners;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           listeners = addTempListeners(this, "end", reject);
           this.endCalled = true;
           endCloseHandler = () => {
             this.sftp = void 0;
             this.debugMsg("end: Connection closed");
-            resolve(true);
+            resolve2(true);
           };
           this.on("close", endCloseHandler);
           if (this.sftp) {
             this.client.end();
           } else {
             this.debugMsg("end: Called when no connection active");
-            resolve(true);
+            resolve2(true);
           }
         }).finally(() => {
           removeTempListeners(this, listeners, "end");
@@ -27260,10 +27260,10 @@ var SftpManager = class {
     } else if (typeof buf === "string") {
       return Buffer.from(buf);
     } else {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve2, reject) => {
         const chunks = [];
         buf.on("data", (c) => chunks.push(c));
-        buf.on("end", () => resolve(Buffer.concat(chunks)));
+        buf.on("end", () => resolve2(Buffer.concat(chunks)));
         buf.on("error", reject);
       });
     }
@@ -28002,14 +28002,14 @@ var UploadManager = class {
       targetUri = vscode5.window.activeTextEditor.document.uri;
     }
     if (!targetUri) {
-      vscode5.window.showWarningMessage("No file selected to download.");
+      vscode5.window.showWarningMessage("No file or folder selected to download.");
       return;
     }
     let config = this.configManager.getActiveConfig();
     if (promptServer || !config) {
       const allConfigs = this.configManager.getAllConfigs();
       if (allConfigs.length === 0) {
-        vscode5.window.showErrorMessage("No deployment configurations found.");
+        vscode5.window.showErrorMessage("No deployment configurations found in .vscode/sftp.json.");
         return;
       }
       const picked = await vscode5.window.showQuickPick(
@@ -28020,7 +28020,16 @@ var UploadManager = class {
         return;
       config = picked.config;
     }
-    const relPath = this.configManager.getRelativePath(targetUri.fsPath);
+    const root = this.configManager.getWorkspaceRoot();
+    if (!root)
+      return;
+    const absPath = targetUri.fsPath;
+    const isDir = fs5.existsSync(absPath) ? fs5.statSync(absPath).isDirectory() : false;
+    if (isDir || absPath === root) {
+      await this.downloadDirectory(absPath, config);
+      return;
+    }
+    const relPath = this.configManager.getRelativePath(absPath);
     if (!relPath)
       return;
     const remotePath = this.configManager.getRemotePath(relPath);
@@ -28030,13 +28039,86 @@ var UploadManager = class {
       cancellable: false
     }, async () => {
       try {
-        await this.sftpManager.downloadFile(config, remotePath, targetUri.fsPath);
+        await this.sftpManager.downloadFile(config, remotePath, absPath);
         this.changeTracker.markAsSynced([relPath]);
         vscode5.window.showInformationMessage(`[Deployment] Downloaded: ${relPath} from ${config.name}`);
       } catch (error) {
         vscode5.window.showErrorMessage(`[Deployment] Download failed for ${relPath}: ${error.message || error}`);
       }
     });
+  }
+  async downloadDirectory(localDir, config) {
+    const root = this.configManager.getWorkspaceRoot();
+    if (!root)
+      return;
+    const relDir = path5.relative(root, localDir).split(path5.sep).join("/");
+    const remoteDir = relDir ? this.configManager.getRemotePath(relDir) : config.remotePath;
+    await vscode5.window.withProgress({
+      location: vscode5.ProgressLocation.Notification,
+      title: `Downloading folder '${relDir || "."}' from ${config.name}...`,
+      cancellable: true
+    }, async (progress, token) => {
+      try {
+        const filesToDownload = await this.collectRemoteFiles(remoteDir, localDir, config, token);
+        if (filesToDownload.length === 0) {
+          vscode5.window.showInformationMessage(`No downloadable files found in remote '${remoteDir}'.`);
+          return;
+        }
+        let downloaded = 0;
+        let failed = 0;
+        const synced = [];
+        for (let i = 0; i < filesToDownload.length; i++) {
+          if (token.isCancellationRequested)
+            break;
+          const f = filesToDownload[i];
+          progress.report({
+            message: `(${i + 1}/${filesToDownload.length}) ${f.relPath}`,
+            increment: 1 / filesToDownload.length * 100
+          });
+          try {
+            await this.sftpManager.downloadFile(config, f.remotePath, f.localPath);
+            synced.push(f.relPath);
+            downloaded++;
+          } catch (err) {
+            failed++;
+          }
+        }
+        this.changeTracker.markAsSynced(synced);
+        vscode5.window.showInformationMessage(
+          `[Deployment] Folder download finished: ${downloaded} downloaded${failed > 0 ? `, ${failed} failed` : ""}.`
+        );
+      } catch (err) {
+        vscode5.window.showErrorMessage(`[Deployment] Folder download failed: ${err.message || err}`);
+      }
+    });
+  }
+  async collectRemoteFiles(remoteDir, localDir, config, token) {
+    const root = this.configManager.getWorkspaceRoot();
+    const results = [];
+    let entries = [];
+    try {
+      entries = await this.sftpManager.list(config, remoteDir);
+    } catch {
+      return [];
+    }
+    for (const e of entries) {
+      if (token.isCancellationRequested)
+        break;
+      if (e.name === "." || e.name === "..")
+        continue;
+      const subRemote = path5.posix.join(remoteDir, e.name);
+      const subLocal = path5.join(localDir, e.name);
+      const rel = path5.relative(root, subLocal).split(path5.sep).join("/");
+      if (this.configManager.shouldIgnore(rel, config.ignore))
+        continue;
+      if (e.type === "d") {
+        const subFiles = await this.collectRemoteFiles(subRemote, subLocal, config, token);
+        results.push(...subFiles);
+      } else {
+        results.push({ remotePath: subRemote, localPath: subLocal, relPath: rel });
+      }
+    }
+    return results;
   }
 };
 
@@ -28238,10 +28320,14 @@ var vscode8 = __toESM(require("vscode"));
 var path8 = __toESM(require("path"));
 var fs6 = __toESM(require("fs"));
 var SyncEngine = class {
-  constructor(configManager, sftpManager) {
+  constructor(configManager, sftpManager, changeTracker) {
     this.configManager = configManager;
     this.sftpManager = sftpManager;
+    this.changeTracker = changeTracker;
   }
+  /**
+   * Interactive bidirectional sync with PhpStorm style selection dialog.
+   */
   async syncWithRemote(folderUri) {
     const config = this.configManager.getActiveConfig();
     if (!config) {
@@ -28298,11 +28384,17 @@ var SyncEngine = class {
         if (selected && selected.length > 0) {
           const toUpload = selected.filter((s) => s.item.status === "local_newer" || s.item.status === "local_only");
           const toDownload = selected.filter((s) => s.item.status === "remote_newer" || s.item.status === "remote_only");
+          const syncedPaths = [];
           for (const s of toUpload) {
             await this.sftpManager.uploadFile(config, s.item.localPath, s.item.remotePath);
+            syncedPaths.push(s.item.relativePath);
           }
           for (const s of toDownload) {
             await this.sftpManager.downloadFile(config, s.item.remotePath, s.item.localPath);
+            syncedPaths.push(s.item.relativePath);
+          }
+          if (this.changeTracker) {
+            this.changeTracker.markAsSynced(syncedPaths);
           }
           vscode8.window.showInformationMessage(`Synchronized ${selected.length} file(s) with ${config.name}.`);
         }
@@ -28310,6 +28402,280 @@ var SyncEngine = class {
         vscode8.window.showErrorMessage(`Sync analysis failed: ${e.message || e}`);
       }
     });
+  }
+  /**
+   * Mirror Remote to Local:
+   * Downloads files that are new/modified on the remote server, and safely removes
+   * local orphaned files/folders that were deleted or moved on the server (sending them to Trash).
+   */
+  async mirrorRemoteToLocal(folderUri, promptServer = false) {
+    let config = this.configManager.getActiveConfig();
+    if (promptServer || !config) {
+      const allConfigs = this.configManager.getAllConfigs();
+      if (allConfigs.length === 0) {
+        vscode8.window.showErrorMessage("No deployment configurations found in .vscode/sftp.json.");
+        return;
+      }
+      const picked = await vscode8.window.showQuickPick(
+        allConfigs.map((c) => ({ label: c.name, config: c })),
+        { placeHolder: "Select server to mirror from" }
+      );
+      if (!picked)
+        return;
+      config = picked.config;
+    }
+    const root = this.configManager.getWorkspaceRoot();
+    if (!root)
+      return;
+    const targetLocalDir = folderUri ? folderUri.fsPath : root;
+    const relDir = path8.relative(root, targetLocalDir).split(path8.sep).join("/");
+    const remoteBase = relDir ? this.configManager.getRemotePath(relDir) : config.remotePath;
+    let scanResult = {
+      toDownload: [],
+      toDeleteLocally: []
+    };
+    await vscode8.window.withProgress({
+      location: vscode8.ProgressLocation.Notification,
+      title: `Scanning for mirror differences with ${config.name}...`,
+      cancellable: true
+    }, async (progress, token) => {
+      try {
+        scanResult = await this.scanForMirror(targetLocalDir, remoteBase, config, token, progress);
+      } catch (err) {
+        vscode8.window.showErrorMessage(`[Deployment] Mirror scan failed: ${err.message || err}`);
+      }
+    });
+    if (scanResult.toDownload.length === 0 && scanResult.toDeleteLocally.length === 0) {
+      vscode8.window.showInformationMessage(
+        `[Deployment] '${relDir || "."}' is already 100% identical to ${config.name}. No changes detected.`
+      );
+      return;
+    }
+    const summaryMsg = `Target: '${relDir || "workspace root"}'
+\u2022 \u2B07\uFE0F ${scanResult.toDownload.length} file(s) to download (new/updated on server)
+\u2022 \u{1F5D1}\uFE0F ${scanResult.toDeleteLocally.length} local file(s) to move to Trash (removed/moved on server)
+
+Protected files (.git, .vscode, .env, .gitignore) will never be touched.`;
+    const choice = await vscode8.window.showWarningMessage(
+      `Mirror from ${config.name}: ${scanResult.toDownload.length} download(s), ${scanResult.toDeleteLocally.length} local deletion(s).`,
+      { modal: true, detail: summaryMsg },
+      "Proceed (Move Orphans to Trash)",
+      "Review File List"
+    );
+    if (!choice)
+      return;
+    let selectedToDownload = scanResult.toDownload;
+    let selectedToDelete = scanResult.toDeleteLocally;
+    if (choice === "Review File List") {
+      const pickItems = [
+        ...scanResult.toDownload.map((d) => ({
+          label: `\u2B07\uFE0F ${d.relativePath}`,
+          description: d.reason,
+          item: d,
+          picked: true
+        })),
+        ...scanResult.toDeleteLocally.map((del) => ({
+          label: `\u{1F5D1}\uFE0F ${del.relativePath}`,
+          description: del.reason,
+          item: del,
+          picked: true
+        }))
+      ];
+      const picked = await vscode8.window.showQuickPick(pickItems, {
+        canPickMany: true,
+        placeHolder: "Select files to synchronize/delete (Esc to cancel)"
+      });
+      if (!picked || picked.length === 0) {
+        vscode8.window.showInformationMessage("Mirror operation cancelled.");
+        return;
+      }
+      selectedToDownload = picked.filter((p) => p.item.type === "download").map((p) => p.item);
+      selectedToDelete = picked.filter((p) => p.item.type === "delete").map((p) => p.item);
+    }
+    await vscode8.window.withProgress({
+      location: vscode8.ProgressLocation.Notification,
+      title: `Mirroring from ${config.name}...`,
+      cancellable: true
+    }, async (progress, token) => {
+      let downloaded = 0;
+      let deleted = 0;
+      let failed = 0;
+      const syncedPaths = [];
+      const totalOps = selectedToDownload.length + selectedToDelete.length;
+      for (let i = 0; i < selectedToDownload.length; i++) {
+        if (token.isCancellationRequested)
+          break;
+        const item = selectedToDownload[i];
+        progress.report({
+          message: `\u2B07\uFE0F (${i + 1}/${selectedToDownload.length}) ${item.relativePath}`,
+          increment: totalOps > 0 ? 1 / totalOps * 100 : 0
+        });
+        try {
+          await this.sftpManager.downloadFile(config, item.remotePath, item.localPath);
+          syncedPaths.push(item.relativePath);
+          downloaded++;
+        } catch (err) {
+          console.error(`Download failed for ${item.relativePath}:`, err);
+          failed++;
+        }
+      }
+      for (let i = 0; i < selectedToDelete.length; i++) {
+        if (token.isCancellationRequested)
+          break;
+        const item = selectedToDelete[i];
+        progress.report({
+          message: `\u{1F5D1}\uFE0F (${i + 1}/${selectedToDelete.length}) ${item.relativePath}`,
+          increment: totalOps > 0 ? 1 / totalOps * 100 : 0
+        });
+        try {
+          if (!this.configManager.shouldIgnore(item.relativePath, config.ignore)) {
+            if (fs6.existsSync(item.localPath)) {
+              await vscode8.workspace.fs.delete(vscode8.Uri.file(item.localPath), {
+                recursive: false,
+                useTrash: true
+              });
+              syncedPaths.push(item.relativePath);
+              deleted++;
+            }
+          }
+        } catch (err) {
+          console.error(`Delete failed for ${item.relativePath}:`, err);
+          failed++;
+        }
+      }
+      this.cleanEmptyDirectories(targetLocalDir, root);
+      if (this.changeTracker) {
+        this.changeTracker.markAsSynced(syncedPaths);
+      }
+      vscode8.window.showInformationMessage(
+        `[Deployment] Mirror from ${config.name} finished: ${downloaded} downloaded, ${deleted} moved to trash${failed > 0 ? `, ${failed} errors` : ""}.`
+      );
+    });
+  }
+  async scanForMirror(localDir, remoteDir, config, token, progress) {
+    const root = this.configManager.getWorkspaceRoot();
+    const toDownload = [];
+    const toDeleteLocally = [];
+    const localEntries = fs6.existsSync(localDir) ? fs6.readdirSync(localDir, { withFileTypes: true }) : [];
+    const localMap = /* @__PURE__ */ new Map();
+    for (const e of localEntries) {
+      const rel = path8.relative(root, path8.join(localDir, e.name)).split(path8.sep).join("/");
+      if (!this.configManager.shouldIgnore(rel, config.ignore)) {
+        localMap.set(e.name, e);
+      }
+    }
+    let remoteEntries = [];
+    try {
+      remoteEntries = await this.sftpManager.list(config, remoteDir);
+    } catch {
+      remoteEntries = [];
+    }
+    const remoteMap = /* @__PURE__ */ new Map();
+    for (const r of remoteEntries) {
+      if (r.name !== "." && r.name !== "..") {
+        const rel = path8.relative(root, path8.join(localDir, r.name)).split(path8.sep).join("/");
+        if (!this.configManager.shouldIgnore(rel, config.ignore)) {
+          remoteMap.set(r.name, r);
+        }
+      }
+    }
+    const allNames = /* @__PURE__ */ new Set([...localMap.keys(), ...remoteMap.keys()]);
+    for (const name of allNames) {
+      if (token.isCancellationRequested)
+        break;
+      const localE = localMap.get(name);
+      const remoteE = remoteMap.get(name);
+      const localPath = path8.join(localDir, name);
+      const remotePath = path8.posix.join(remoteDir, name);
+      const relPath = path8.relative(root, localPath).split(path8.sep).join("/");
+      if (this.configManager.shouldIgnore(relPath, config.ignore))
+        continue;
+      if (localE?.isDirectory() || remoteE?.type === "d") {
+        const sub = await this.scanForMirror(localPath, remotePath, config, token, progress);
+        toDownload.push(...sub.toDownload);
+        toDeleteLocally.push(...sub.toDeleteLocally);
+        continue;
+      }
+      if (localE && !remoteE) {
+        toDeleteLocally.push({
+          relativePath: relPath,
+          localPath,
+          remotePath,
+          reason: "Removed / moved on server",
+          type: "delete"
+        });
+      } else if (!localE && remoteE) {
+        toDownload.push({
+          relativePath: relPath,
+          localPath,
+          remotePath,
+          reason: "New file on server",
+          type: "download"
+        });
+      } else if (localE && remoteE) {
+        const stat = fs6.statSync(localPath);
+        const localMtime = stat.mtimeMs;
+        const remoteMtime = (remoteE.modifyTime || 0) * 1e3;
+        const sizeDiff = Math.abs(stat.size - remoteE.size);
+        const timeDiff = remoteMtime - localMtime;
+        if (sizeDiff > 0 || timeDiff > 3e3) {
+          toDownload.push({
+            relativePath: relPath,
+            localPath,
+            remotePath,
+            reason: sizeDiff > 0 ? "File size differs" : "Newer on server",
+            type: "download"
+          });
+        }
+      }
+    }
+    return { toDownload, toDeleteLocally };
+  }
+  cleanEmptyDirectories(currentDir, rootDir) {
+    if (!fs6.existsSync(currentDir))
+      return true;
+    const stat = fs6.statSync(currentDir);
+    if (!stat.isDirectory())
+      return false;
+    if (path8.resolve(currentDir) === path8.resolve(rootDir)) {
+      try {
+        const entries = fs6.readdirSync(currentDir);
+        for (const entry of entries) {
+          const full = path8.join(currentDir, entry);
+          if (fs6.existsSync(full) && fs6.statSync(full).isDirectory()) {
+            this.cleanEmptyDirectories(full, rootDir);
+          }
+        }
+      } catch {
+      }
+      return false;
+    }
+    const rel = path8.relative(rootDir, currentDir).split(path8.sep).join("/");
+    if (this.configManager.isForbidden(rel)) {
+      return false;
+    }
+    let isEmpty = true;
+    try {
+      const entries = fs6.readdirSync(currentDir);
+      for (const entry of entries) {
+        const full = path8.join(currentDir, entry);
+        if (fs6.existsSync(full) && fs6.statSync(full).isDirectory()) {
+          const childEmpty = this.cleanEmptyDirectories(full, rootDir);
+          if (!childEmpty) {
+            isEmpty = false;
+          }
+        } else {
+          isEmpty = false;
+        }
+      }
+      if (isEmpty) {
+        fs6.rmdirSync(currentDir);
+        return true;
+      }
+    } catch {
+      return false;
+    }
+    return false;
   }
   async compareDirectory(localDir, remoteDir, config, token, progress) {
     const root = this.configManager.getWorkspaceRoot();
@@ -28696,7 +29062,7 @@ function activate(context) {
   const remoteMonitor = new RemoteMonitor(configManager, sftpManager);
   const uploadManager = new UploadManager(configManager, sftpManager, changeTracker);
   const diffManager = new DiffManager(configManager, sftpManager);
-  const syncEngine = new SyncEngine(configManager, sftpManager);
+  const syncEngine = new SyncEngine(configManager, sftpManager, changeTracker);
   const remoteFsProvider = new RemoteFsProvider(sftpManager, configManager);
   const statusBar = new StatusBarManager(configManager, changeTracker, remoteMonitor);
   context.subscriptions.push(
@@ -28751,11 +29117,19 @@ function activate(context) {
     vscode11.commands.registerCommand("deployment.downloadSelection", async (uri) => {
       await uploadManager.downloadTarget(uri, true);
     }),
-    // 7. Compare with Remote
+    // 7. Mirror Download (Delete local orphans)
+    vscode11.commands.registerCommand("deployment.mirrorDownload", async (uri) => {
+      await syncEngine.mirrorRemoteToLocal(uri, false);
+    }),
+    // 8. Mirror Download from... (Select server)
+    vscode11.commands.registerCommand("deployment.mirrorDownloadSelection", async (uri) => {
+      await syncEngine.mirrorRemoteToLocal(uri, true);
+    }),
+    // 9. Compare with Remote
     vscode11.commands.registerCommand("deployment.compareWithRemote", async (uri) => {
       await diffManager.compareWithRemote(uri);
     }),
-    // 8. Sync with Deployed...
+    // 10. Sync with Deployed...
     vscode11.commands.registerCommand("deployment.syncWithRemote", async (uri) => {
       await syncEngine.syncWithRemote(uri);
     }),

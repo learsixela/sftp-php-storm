@@ -278,7 +278,7 @@ export class UploadManager {
     }
 
     if (!targetUri) {
-      vscode.window.showWarningMessage('No file selected to download.');
+      vscode.window.showWarningMessage('No file or folder selected to download.');
       return;
     }
 
@@ -286,7 +286,7 @@ export class UploadManager {
     if (promptServer || !config) {
       const allConfigs = this.configManager.getAllConfigs();
       if (allConfigs.length === 0) {
-        vscode.window.showErrorMessage('No deployment configurations found.');
+        vscode.window.showErrorMessage('No deployment configurations found in .vscode/sftp.json.');
         return;
       }
       const picked = await vscode.window.showQuickPick(
@@ -297,7 +297,18 @@ export class UploadManager {
       config = picked.config;
     }
 
-    const relPath = this.configManager.getRelativePath(targetUri.fsPath);
+    const root = this.configManager.getWorkspaceRoot();
+    if (!root) return;
+
+    const absPath = targetUri.fsPath;
+    const isDir = fs.existsSync(absPath) ? fs.statSync(absPath).isDirectory() : false;
+
+    if (isDir || absPath === root) {
+      await this.downloadDirectory(absPath, config);
+      return;
+    }
+
+    const relPath = this.configManager.getRelativePath(absPath);
     if (!relPath) return;
 
     const remotePath = this.configManager.getRemotePath(relPath);
@@ -308,12 +319,100 @@ export class UploadManager {
       cancellable: false
     }, async () => {
       try {
-        await this.sftpManager.downloadFile(config, remotePath, targetUri!.fsPath);
+        await this.sftpManager.downloadFile(config!, remotePath, absPath);
         this.changeTracker.markAsSynced([relPath]);
-        vscode.window.showInformationMessage(`[Deployment] Downloaded: ${relPath} from ${config.name}`);
+        vscode.window.showInformationMessage(`[Deployment] Downloaded: ${relPath} from ${config!.name}`);
       } catch (error: any) {
         vscode.window.showErrorMessage(`[Deployment] Download failed for ${relPath}: ${error.message || error}`);
       }
     });
   }
+
+  public async downloadDirectory(localDir: string, config: any): Promise<void> {
+    const root = this.configManager.getWorkspaceRoot();
+    if (!root) return;
+
+    const relDir = path.relative(root, localDir).split(path.sep).join('/');
+    const remoteDir = relDir ? this.configManager.getRemotePath(relDir) : config.remotePath;
+
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: `Downloading folder '${relDir || '.'}' from ${config.name}...`,
+      cancellable: true
+    }, async (progress, token) => {
+      try {
+        const filesToDownload = await this.collectRemoteFiles(remoteDir, localDir, config, token);
+        if (filesToDownload.length === 0) {
+          vscode.window.showInformationMessage(`No downloadable files found in remote '${remoteDir}'.`);
+          return;
+        }
+
+        let downloaded = 0;
+        let failed = 0;
+        const synced: string[] = [];
+
+        for (let i = 0; i < filesToDownload.length; i++) {
+          if (token.isCancellationRequested) break;
+          const f = filesToDownload[i];
+          progress.report({
+            message: `(${i + 1}/${filesToDownload.length}) ${f.relPath}`,
+            increment: (1 / filesToDownload.length) * 100
+          });
+
+          try {
+            await this.sftpManager.downloadFile(config, f.remotePath, f.localPath);
+            synced.push(f.relPath);
+            downloaded++;
+          } catch (err) {
+            failed++;
+          }
+        }
+
+        this.changeTracker.markAsSynced(synced);
+        vscode.window.showInformationMessage(
+          `[Deployment] Folder download finished: ${downloaded} downloaded${failed > 0 ? `, ${failed} failed` : ''}.`
+        );
+      } catch (err: any) {
+        vscode.window.showErrorMessage(`[Deployment] Folder download failed: ${err.message || err}`);
+      }
+    });
+  }
+
+  private async collectRemoteFiles(
+    remoteDir: string,
+    localDir: string,
+    config: any,
+    token: vscode.CancellationToken
+  ): Promise<{ remotePath: string; localPath: string; relPath: string }[]> {
+    const root = this.configManager.getWorkspaceRoot()!;
+    const results: { remotePath: string; localPath: string; relPath: string }[] = [];
+
+    let entries: any[] = [];
+    try {
+      entries = await this.sftpManager.list(config, remoteDir);
+    } catch {
+      return [];
+    }
+
+    for (const e of entries) {
+      if (token.isCancellationRequested) break;
+      if (e.name === '.' || e.name === '..') continue;
+
+      const subRemote = path.posix.join(remoteDir, e.name);
+      const subLocal = path.join(localDir, e.name);
+      const rel = path.relative(root, subLocal).split(path.sep).join('/');
+
+      if (this.configManager.shouldIgnore(rel, config.ignore)) continue;
+
+      if (e.type === 'd') {
+        const subFiles = await this.collectRemoteFiles(subRemote, subLocal, config, token);
+        results.push(...subFiles);
+      } else {
+        results.push({ remotePath: subRemote, localPath: subLocal, relPath: rel });
+      }
+    }
+
+    return results;
+  }
 }
+
