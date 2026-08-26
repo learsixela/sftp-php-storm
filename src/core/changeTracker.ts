@@ -224,21 +224,18 @@ export class ChangeTracker {
       const pending: PendingChangeItem[] = [];
 
       if (!manifest) {
+        // Auto-initialize baseline manifest on first scan so the workspace starts clean (0 pending changes).
+        const hashes: Record<string, string> = {};
         for (const rel of files) {
           const abs = path.join(root, rel);
-          const stat = fs.statSync(abs);
-          pending.push({
-            relativePath: rel,
-            status: 'added',
-            localUri: vscode.Uri.file(abs),
-            remotePath: this.configManager.getRemotePath(rel),
-            size: stat.size,
-            mtime: stat.mtimeMs,
-            source: 'local'
-          });
+          const h = this.getOrComputeHash(abs, rel);
+          if (h) hashes[rel] = h;
         }
-      } else {
-        const fileSet = new Set(files);
+        this.saveManifest(hashes);
+        manifest = hashes;
+      }
+
+      const fileSet = new Set(files);
 
         for (const rel of files) {
           const abs = path.join(root, rel);
@@ -281,7 +278,6 @@ export class ChangeTracker {
             });
           }
         }
-      }
 
       // Filter out any ignored files immediately
       this.cachedPending = pending.filter(p => !this.configManager.shouldIgnore(p.relativePath));

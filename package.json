@@ -414,8 +414,8 @@
         },
         "deployment.remotePollingInterval": {
           "type": "number",
-          "default": 60,
-          "description": "Interval in seconds to check server for remote modifications (0 to disable)."
+          "default": 0,
+          "description": "Interval in seconds to check server for remote modifications (0 to disable background polling)."
         }
       }
     }

@@ -25,6 +25,16 @@ export class RemoteMonitor {
     return this.remotePending;
   }
 
+  public clearRemotePending(relPaths?: string[]): void {
+    if (!relPaths || relPaths.length === 0) {
+      this.remotePending = [];
+    } else {
+      const set = new Set(relPaths);
+      this.remotePending = this.remotePending.filter(p => !set.has(p.relativePath));
+    }
+    this._onDidChangeRemotePending.fire(this.remotePending);
+  }
+
   public restartTimer(): void {
     if (this.timer) {
       clearInterval(this.timer);
@@ -34,7 +44,8 @@ export class RemoteMonitor {
     const config = this.configManager.getActiveConfig();
     if (!config) return;
 
-    const intervalSec = config.remotePollingInterval !== undefined ? config.remotePollingInterval : 60;
+    // Default to 0 (disabled by default) to avoid aggressive network scanning on huge projects
+    const intervalSec = config.remotePollingInterval !== undefined ? config.remotePollingInterval : 0;
     if (intervalSec > 0) {
       this.timer = setInterval(() => {
         this.checkRemoteChanges(false);
@@ -109,7 +120,11 @@ export class RemoteMonitor {
             });
           } else {
             const localStat = fs.statSync(localAbs);
-            if (remoteMtimeMs - localStat.mtimeMs > 3000) {
+            const sizeDiff = localStat.size !== item.size;
+            const timeDiff = remoteMtimeMs - localStat.mtimeMs;
+
+            // Only mark as remote change if file size differs or remote timestamp is significantly newer (> 5s)
+            if (sizeDiff || timeDiff > 5000) {
               results.push({
                 relativePath: relPath,
                 status: 'remote_newer',
@@ -134,3 +149,4 @@ export class RemoteMonitor {
     this._onDidChangeRemotePending.dispose();
   }
 }
+

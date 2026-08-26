@@ -137,6 +137,14 @@ export class SftpManager {
     }
 
     await client.fastGet(remotePath, localPath);
+    try {
+      const stats = await client.stat(remotePath);
+      if (stats && stats.modifyTime) {
+        const mtimeSec = stats.modifyTime;
+        const atimeSec = stats.accessTime || stats.modifyTime;
+        fs.utimesSync(localPath, atimeSec, mtimeSec);
+      }
+    } catch {}
   }
 
   public async readFile(config: ServerConfig, remotePath: string): Promise<Buffer> {

@@ -166,7 +166,7 @@ export class ConfigManager {
       webServerUrl: this.substituteEnvVars(raw.webServerUrl || '', root),
       algorithms: raw.algorithms,
       connectTimeout: raw.connectTimeout || 15000,
-      remotePollingInterval: raw.remotePollingInterval !== undefined ? Number(raw.remotePollingInterval) : 60
+      remotePollingInterval: raw.remotePollingInterval !== undefined ? Number(raw.remotePollingInterval) : 0
     };
   }
 

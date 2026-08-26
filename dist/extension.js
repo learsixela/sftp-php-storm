@@ -26985,7 +26985,7 @@ var ConfigManager = class {
       webServerUrl: this.substituteEnvVars(raw.webServerUrl || "", root),
       algorithms: raw.algorithms,
       connectTimeout: raw.connectTimeout || 15e3,
-      remotePollingInterval: raw.remotePollingInterval !== void 0 ? Number(raw.remotePollingInterval) : 60
+      remotePollingInterval: raw.remotePollingInterval !== void 0 ? Number(raw.remotePollingInterval) : 0
     };
   }
   /**
@@ -27251,6 +27251,15 @@ var SftpManager = class {
       fs2.mkdirSync(localDir, { recursive: true });
     }
     await client.fastGet(remotePath, localPath);
+    try {
+      const stats = await client.stat(remotePath);
+      if (stats && stats.modifyTime) {
+        const mtimeSec = stats.modifyTime;
+        const atimeSec = stats.accessTime || stats.modifyTime;
+        fs2.utimesSync(localPath, atimeSec, mtimeSec);
+      }
+    } catch {
+    }
   }
   async readFile(config, remotePath) {
     const client = await this.getClient(config);
@@ -27525,59 +27534,54 @@ var ChangeTracker = class {
       const files = this.walkDirectory(root, config.ignore);
       const pending = [];
       if (!manifest) {
+        const hashes = {};
         for (const rel of files) {
           const abs = path3.join(root, rel);
-          const stat = fs3.statSync(abs);
+          const h = this.getOrComputeHash(abs, rel);
+          if (h)
+            hashes[rel] = h;
+        }
+        this.saveManifest(hashes);
+        manifest = hashes;
+      }
+      const fileSet = new Set(files);
+      for (const rel of files) {
+        const abs = path3.join(root, rel);
+        const h = this.getOrComputeHash(abs, rel);
+        const stat = fs3.statSync(abs);
+        if (!manifest[rel]) {
           pending.push({
             relativePath: rel,
             status: "added",
             localUri: vscode3.Uri.file(abs),
             remotePath: this.configManager.getRemotePath(rel),
+            hash: h || void 0,
+            size: stat.size,
+            mtime: stat.mtimeMs,
+            source: "local"
+          });
+        } else if (manifest[rel] !== h) {
+          pending.push({
+            relativePath: rel,
+            status: "modified",
+            localUri: vscode3.Uri.file(abs),
+            remotePath: this.configManager.getRemotePath(rel),
+            hash: h || void 0,
             size: stat.size,
             mtime: stat.mtimeMs,
             source: "local"
           });
         }
-      } else {
-        const fileSet = new Set(files);
-        for (const rel of files) {
-          const abs = path3.join(root, rel);
-          const h = this.getOrComputeHash(abs, rel);
-          const stat = fs3.statSync(abs);
-          if (!manifest[rel]) {
-            pending.push({
-              relativePath: rel,
-              status: "added",
-              localUri: vscode3.Uri.file(abs),
-              remotePath: this.configManager.getRemotePath(rel),
-              hash: h || void 0,
-              size: stat.size,
-              mtime: stat.mtimeMs,
-              source: "local"
-            });
-          } else if (manifest[rel] !== h) {
-            pending.push({
-              relativePath: rel,
-              status: "modified",
-              localUri: vscode3.Uri.file(abs),
-              remotePath: this.configManager.getRemotePath(rel),
-              hash: h || void 0,
-              size: stat.size,
-              mtime: stat.mtimeMs,
-              source: "local"
-            });
-          }
-        }
-        for (const rel of Object.keys(manifest)) {
-          if (!this.configManager.shouldIgnore(rel, config.ignore) && !fileSet.has(rel)) {
-            pending.push({
-              relativePath: rel,
-              status: "deleted",
-              localUri: vscode3.Uri.file(path3.join(root, rel)),
-              remotePath: this.configManager.getRemotePath(rel),
-              source: "local"
-            });
-          }
+      }
+      for (const rel of Object.keys(manifest)) {
+        if (!this.configManager.shouldIgnore(rel, config.ignore) && !fileSet.has(rel)) {
+          pending.push({
+            relativePath: rel,
+            status: "deleted",
+            localUri: vscode3.Uri.file(path3.join(root, rel)),
+            remotePath: this.configManager.getRemotePath(rel),
+            source: "local"
+          });
         }
       }
       this.cachedPending = pending.filter((p) => !this.configManager.shouldIgnore(p.relativePath));
@@ -27649,6 +27653,15 @@ var RemoteMonitor = class {
   getRemotePending() {
     return this.remotePending;
   }
+  clearRemotePending(relPaths) {
+    if (!relPaths || relPaths.length === 0) {
+      this.remotePending = [];
+    } else {
+      const set = new Set(relPaths);
+      this.remotePending = this.remotePending.filter((p) => !set.has(p.relativePath));
+    }
+    this._onDidChangeRemotePending.fire(this.remotePending);
+  }
   restartTimer() {
     if (this.timer) {
       clearInterval(this.timer);
@@ -27657,7 +27670,7 @@ var RemoteMonitor = class {
     const config = this.configManager.getActiveConfig();
     if (!config)
       return;
-    const intervalSec = config.remotePollingInterval !== void 0 ? config.remotePollingInterval : 60;
+    const intervalSec = config.remotePollingInterval !== void 0 ? config.remotePollingInterval : 0;
     if (intervalSec > 0) {
       this.timer = setInterval(() => {
         this.checkRemoteChanges(false);
@@ -27726,7 +27739,9 @@ var RemoteMonitor = class {
             });
           } else {
             const localStat = fs4.statSync(localAbs);
-            if (remoteMtimeMs - localStat.mtimeMs > 3e3) {
+            const sizeDiff = localStat.size !== item.size;
+            const timeDiff = remoteMtimeMs - localStat.mtimeMs;
+            if (sizeDiff || timeDiff > 5e3) {
               results.push({
                 relativePath: relPath,
                 status: "remote_newer",
