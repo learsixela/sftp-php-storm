@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { ConfigManager } from './config/configManager';
+import { ConfigManager, resolveTargetUri } from './config/configManager';
 import { SecretsManager } from './config/secretsManager';
 import { SftpManager } from './client/sftpClient';
 import { ChangeTracker } from './core/changeTracker';
@@ -70,12 +70,12 @@ export function activate(context: vscode.ExtensionContext) {
   // Commands Registration
   context.subscriptions.push(
     // 1. Upload
-    vscode.commands.registerCommand('deployment.upload', async (uri?: vscode.Uri) => {
+    vscode.commands.registerCommand('deployment.upload', async (uri?: any) => {
       await uploadManager.uploadTarget(uri, false);
     }),
 
     // 2. Upload to... (Select server)
-    vscode.commands.registerCommand('deployment.uploadSelection', async (uri?: vscode.Uri) => {
+    vscode.commands.registerCommand('deployment.uploadSelection', async (uri?: any) => {
       await uploadManager.uploadTarget(uri, true);
     }),
 
@@ -90,37 +90,37 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     // 5. Download
-    vscode.commands.registerCommand('deployment.download', async (uri?: vscode.Uri) => {
+    vscode.commands.registerCommand('deployment.download', async (uri?: any) => {
       await uploadManager.downloadTarget(uri, false);
     }),
 
     // 6. Download from... (Select server)
-    vscode.commands.registerCommand('deployment.downloadSelection', async (uri?: vscode.Uri) => {
+    vscode.commands.registerCommand('deployment.downloadSelection', async (uri?: any) => {
       await uploadManager.downloadTarget(uri, true);
     }),
 
     // 7. Mirror Download (Delete local orphans)
-    vscode.commands.registerCommand('deployment.mirrorDownload', async (uri?: vscode.Uri) => {
+    vscode.commands.registerCommand('deployment.mirrorDownload', async (uri?: any) => {
       await syncEngine.mirrorRemoteToLocal(uri, false);
     }),
 
     // 8. Mirror Download from... (Select server)
-    vscode.commands.registerCommand('deployment.mirrorDownloadSelection', async (uri?: vscode.Uri) => {
+    vscode.commands.registerCommand('deployment.mirrorDownloadSelection', async (uri?: any) => {
       await syncEngine.mirrorRemoteToLocal(uri, true);
     }),
 
     // 9. Compare with Remote
-    vscode.commands.registerCommand('deployment.compareWithRemote', async (uri?: vscode.Uri) => {
+    vscode.commands.registerCommand('deployment.compareWithRemote', async (uri?: any) => {
       await diffManager.compareWithRemote(uri);
     }),
 
     // 10. Sync with Deployed...
-    vscode.commands.registerCommand('deployment.syncWithRemote', async (uri?: vscode.Uri) => {
+    vscode.commands.registerCommand('deployment.syncWithRemote', async (uri?: any) => {
       await syncEngine.syncWithRemote(uri);
     }),
 
-    // 9. Edit Remote File
-    vscode.commands.registerCommand('deployment.editRemoteFile', async (uri?: vscode.Uri) => {
+    // 11. Edit Remote File
+    vscode.commands.registerCommand('deployment.editRemoteFile', async (uri?: any) => {
       const config = configManager.getActiveConfig();
       if (!config) {
         vscode.window.showErrorMessage('No active deployment server configured.');
@@ -128,8 +128,9 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       let remotePath: string | undefined;
-      if (uri) {
-        const rel = configManager.getRelativePath(uri.fsPath);
+      const targetUri = resolveTargetUri(uri);
+      if (targetUri) {
+        const rel = configManager.getRelativePath(targetUri);
         if (rel) remotePath = configManager.getRemotePath(rel);
       }
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { ConfigManager } from '../config/configManager';
+import { ConfigManager, resolveTargetUri } from '../config/configManager';
 import { RemoteFsProvider } from '../providers/remoteFsProvider';
 import { SftpManager } from '../client/sftpClient';
 
@@ -10,8 +10,8 @@ export class DiffManager {
     private sftpManager: SftpManager
   ) {}
 
-  public async compareWithRemote(targetUri?: vscode.Uri): Promise<void> {
-    const uri = targetUri || vscode.window.activeTextEditor?.document.uri;
+  public async compareWithRemote(targetUri?: any): Promise<void> {
+    const uri = resolveTargetUri(targetUri);
     if (!uri) {
       vscode.window.showWarningMessage('No active file to compare.');
       return;

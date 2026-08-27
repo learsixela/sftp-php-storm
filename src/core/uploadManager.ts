@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { ConfigManager } from '../config/configManager';
+import { ConfigManager, resolveTargetUri } from '../config/configManager';
 import { SftpManager } from '../client/sftpClient';
 import { ChangeTracker } from './changeTracker';
 
@@ -12,14 +12,10 @@ export class UploadManager {
     private changeTracker: ChangeTracker
   ) {}
 
-  public async uploadTarget(uri?: vscode.Uri, promptServer = false): Promise<void> {
-    let targetUri = uri;
-    if (!targetUri && vscode.window.activeTextEditor) {
-      targetUri = vscode.window.activeTextEditor.document.uri;
-    }
-
+  public async uploadTarget(uri?: any, promptServer = false): Promise<void> {
+    const targetUri = resolveTargetUri(uri);
     if (!targetUri) {
-      vscode.window.showWarningMessage('No file selected to upload.');
+      vscode.window.showWarningMessage('No file or folder selected to upload.');
       return;
     }
 
@@ -271,12 +267,8 @@ export class UploadManager {
     });
   }
 
-  public async downloadTarget(uri?: vscode.Uri, promptServer = false): Promise<void> {
-    let targetUri = uri;
-    if (!targetUri && vscode.window.activeTextEditor) {
-      targetUri = vscode.window.activeTextEditor.document.uri;
-    }
-
+  public async downloadTarget(uri?: any, promptServer = false): Promise<void> {
+    const targetUri = resolveTargetUri(uri);
     if (!targetUri) {
       vscode.window.showWarningMessage('No file or folder selected to download.');
       return;

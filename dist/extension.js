@@ -27017,6 +27017,8 @@ var ConfigManager = class {
     return false;
   }
   shouldIgnore(relativePath, customIgnore) {
+    if (!relativePath || typeof relativePath !== "string")
+      return false;
     const posixPath = relativePath.split(path.sep).join("/").replace(/^\//, "");
     if (this.isForbidden(posixPath))
       return true;
@@ -27057,20 +27059,41 @@ var ConfigManager = class {
     return false;
   }
   getRemotePath(relativePath) {
-    if (!this.activeConfig)
-      return "/" + relativePath.split(path.sep).join("/");
-    const base = this.activeConfig.remotePath.replace(/\/$/, "");
+    const base = this.activeConfig ? this.activeConfig.remotePath.replace(/\/$/, "") : "";
+    if (!relativePath || typeof relativePath !== "string") {
+      return base || "/";
+    }
     const posixRel = relativePath.split(path.sep).join("/").replace(/^\//, "");
     return `${base}/${posixRel}`;
   }
-  getRelativePath(absolutePath) {
+  getRelativePath(absolutePathOrItem) {
+    if (!absolutePathOrItem)
+      return null;
+    let absPath = "";
+    if (typeof absolutePathOrItem === "string") {
+      absPath = absolutePathOrItem;
+    } else if (absolutePathOrItem instanceof vscode.Uri || absolutePathOrItem.fsPath) {
+      absPath = absolutePathOrItem.fsPath;
+    } else if (absolutePathOrItem.resourceUri?.fsPath) {
+      absPath = absolutePathOrItem.resourceUri.fsPath;
+    } else if (absolutePathOrItem.changeItem?.localUri?.fsPath) {
+      absPath = absolutePathOrItem.changeItem.localUri.fsPath;
+    } else {
+      return null;
+    }
+    if (!absPath || typeof absPath !== "string")
+      return null;
     const root = this.getWorkspaceRoot();
     if (!root)
       return null;
-    const rel = path.relative(root, absolutePath);
-    if (rel.startsWith("..") || path.isAbsolute(rel))
+    try {
+      const rel = path.relative(root, absPath);
+      if (rel.startsWith("..") || path.isAbsolute(rel))
+        return null;
+      return rel.split(path.sep).join("/");
+    } catch {
       return null;
-    return rel;
+    }
   }
   initWatcher() {
     this.fileWatcher = vscode.workspace.createFileSystemWatcher("**/{.vscode/{sftp,sftp.local,deployment}.json,.gitignore,.sftpignore,.deploymentignore}");
@@ -27084,6 +27107,28 @@ var ConfigManager = class {
     this._onDidChangeConfig.dispose();
   }
 };
+function resolveTargetUri(arg) {
+  if (!arg) {
+    return vscode.window.activeTextEditor?.document.uri;
+  }
+  if (arg instanceof vscode.Uri) {
+    return arg;
+  }
+  if (arg && typeof arg === "object" && typeof arg.fsPath === "string" && arg.fsPath.length > 0) {
+    return vscode.Uri.file(arg.fsPath);
+  }
+  if (arg.resourceUri && (arg.resourceUri instanceof vscode.Uri || typeof arg.resourceUri.fsPath === "string")) {
+    return arg.resourceUri instanceof vscode.Uri ? arg.resourceUri : vscode.Uri.file(arg.resourceUri.fsPath);
+  }
+  if (arg.changeItem?.localUri) {
+    const lUri = arg.changeItem.localUri;
+    return lUri instanceof vscode.Uri ? lUri : vscode.Uri.file(lUri.fsPath || String(lUri));
+  }
+  if (typeof arg === "string" && arg.trim().length > 0) {
+    return vscode.Uri.file(arg);
+  }
+  return vscode.window.activeTextEditor?.document.uri;
+}
 
 // src/config/secretsManager.ts
 var vscode2 = __toESM(require("vscode"));
@@ -27779,12 +27824,9 @@ var UploadManager = class {
     this.changeTracker = changeTracker;
   }
   async uploadTarget(uri, promptServer = false) {
-    let targetUri = uri;
-    if (!targetUri && vscode5.window.activeTextEditor) {
-      targetUri = vscode5.window.activeTextEditor.document.uri;
-    }
+    const targetUri = resolveTargetUri(uri);
     if (!targetUri) {
-      vscode5.window.showWarningMessage("No file selected to upload.");
+      vscode5.window.showWarningMessage("No file or folder selected to upload.");
       return;
     }
     let config = this.configManager.getActiveConfig();
@@ -28012,10 +28054,7 @@ var UploadManager = class {
     });
   }
   async downloadTarget(uri, promptServer = false) {
-    let targetUri = uri;
-    if (!targetUri && vscode5.window.activeTextEditor) {
-      targetUri = vscode5.window.activeTextEditor.document.uri;
-    }
+    const targetUri = resolveTargetUri(uri);
     if (!targetUri) {
       vscode5.window.showWarningMessage("No file or folder selected to download.");
       return;
@@ -28290,7 +28329,7 @@ var DiffManager = class {
     this.sftpManager = sftpManager;
   }
   async compareWithRemote(targetUri) {
-    const uri = targetUri || vscode7.window.activeTextEditor?.document.uri;
+    const uri = resolveTargetUri(targetUri);
     if (!uri) {
       vscode7.window.showWarningMessage("No active file to compare.");
       return;
@@ -28352,7 +28391,11 @@ var SyncEngine = class {
     const root = this.configManager.getWorkspaceRoot();
     if (!root)
       return;
-    const targetDir = folderUri ? folderUri.fsPath : root;
+    const resolvedUri = resolveTargetUri(folderUri);
+    let targetDir = resolvedUri ? resolvedUri.fsPath : root;
+    if (fs6.existsSync(targetDir) && !fs6.statSync(targetDir).isDirectory()) {
+      targetDir = path8.dirname(targetDir);
+    }
     const relDir = path8.relative(root, targetDir).split(path8.sep).join("/");
     const remoteBase = relDir ? this.configManager.getRemotePath(relDir) : config.remotePath;
     await vscode8.window.withProgress({
@@ -28442,7 +28485,11 @@ var SyncEngine = class {
     const root = this.configManager.getWorkspaceRoot();
     if (!root)
       return;
-    const targetLocalDir = folderUri ? folderUri.fsPath : root;
+    const resolvedUri = resolveTargetUri(folderUri);
+    let targetLocalDir = resolvedUri ? resolvedUri.fsPath : root;
+    if (fs6.existsSync(targetLocalDir) && !fs6.statSync(targetLocalDir).isDirectory()) {
+      targetLocalDir = path8.dirname(targetLocalDir);
+    }
     const relDir = path8.relative(root, targetLocalDir).split(path8.sep).join("/");
     const remoteBase = relDir ? this.configManager.getRemotePath(relDir) : config.remotePath;
     let scanResult = {
@@ -29148,7 +29195,7 @@ function activate(context) {
     vscode11.commands.registerCommand("deployment.syncWithRemote", async (uri) => {
       await syncEngine.syncWithRemote(uri);
     }),
-    // 9. Edit Remote File
+    // 11. Edit Remote File
     vscode11.commands.registerCommand("deployment.editRemoteFile", async (uri) => {
       const config = configManager.getActiveConfig();
       if (!config) {
@@ -29156,8 +29203,9 @@ function activate(context) {
         return;
       }
       let remotePath;
-      if (uri) {
-        const rel = configManager.getRelativePath(uri.fsPath);
+      const targetUri = resolveTargetUri(uri);
+      if (targetUri) {
+        const rel = configManager.getRelativePath(targetUri);
         if (rel)
           remotePath = configManager.getRemotePath(rel);
       }

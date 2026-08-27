@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { ConfigManager } from '../config/configManager';
+import { ConfigManager, resolveTargetUri } from '../config/configManager';
 import { SftpManager } from '../client/sftpClient';
 import { ServerConfig, SyncComparisonItem } from '../config/types';
 import { ChangeTracker } from './changeTracker';
@@ -24,7 +24,7 @@ export class SyncEngine {
   /**
    * Interactive bidirectional sync with PhpStorm style selection dialog.
    */
-  public async syncWithRemote(folderUri?: vscode.Uri): Promise<void> {
+  public async syncWithRemote(folderUri?: any): Promise<void> {
     const config = this.configManager.getActiveConfig();
     if (!config) {
       vscode.window.showErrorMessage('No active deployment server configured in .vscode/sftp.json.');
@@ -34,7 +34,11 @@ export class SyncEngine {
     const root = this.configManager.getWorkspaceRoot();
     if (!root) return;
 
-    const targetDir = folderUri ? folderUri.fsPath : root;
+    const resolvedUri = resolveTargetUri(folderUri);
+    let targetDir = resolvedUri ? resolvedUri.fsPath : root;
+    if (fs.existsSync(targetDir) && !fs.statSync(targetDir).isDirectory()) {
+      targetDir = path.dirname(targetDir);
+    }
     const relDir = path.relative(root, targetDir).split(path.sep).join('/');
     const remoteBase = relDir ? this.configManager.getRemotePath(relDir) : config.remotePath;
 
@@ -133,7 +137,11 @@ export class SyncEngine {
     const root = this.configManager.getWorkspaceRoot();
     if (!root) return;
 
-    const targetLocalDir = folderUri ? folderUri.fsPath : root;
+    const resolvedUri = resolveTargetUri(folderUri);
+    let targetLocalDir = resolvedUri ? resolvedUri.fsPath : root;
+    if (fs.existsSync(targetLocalDir) && !fs.statSync(targetLocalDir).isDirectory()) {
+      targetLocalDir = path.dirname(targetLocalDir);
+    }
     const relDir = path.relative(root, targetLocalDir).split(path.sep).join('/');
     const remoteBase = relDir ? this.configManager.getRemotePath(relDir) : config.remotePath;
 

@@ -199,7 +199,8 @@ export class ConfigManager {
     return false;
   }
 
-  public shouldIgnore(relativePath: string, customIgnore?: string[]): boolean {
+  public shouldIgnore(relativePath?: string | null, customIgnore?: string[]): boolean {
+    if (!relativePath || typeof relativePath !== 'string') return false;
     const posixPath = relativePath.split(path.sep).join('/').replace(/^\//, '');
     
     // Check hardcoded blacklist first (including tools, .vscode, .git, etc.)
@@ -248,19 +249,43 @@ export class ConfigManager {
     return false;
   }
 
-  public getRemotePath(relativePath: string): string {
-    if (!this.activeConfig) return '/' + relativePath.split(path.sep).join('/');
-    const base = this.activeConfig.remotePath.replace(/\/$/, '');
+  public getRemotePath(relativePath?: string | null): string {
+    const base = this.activeConfig ? this.activeConfig.remotePath.replace(/\/$/, '') : '';
+    if (!relativePath || typeof relativePath !== 'string') {
+      return base || '/';
+    }
     const posixRel = relativePath.split(path.sep).join('/').replace(/^\//, '');
     return `${base}/${posixRel}`;
   }
 
-  public getRelativePath(absolutePath: string): string | null {
+  public getRelativePath(absolutePathOrItem?: any): string | null {
+    if (!absolutePathOrItem) return null;
+
+    let absPath = '';
+    if (typeof absolutePathOrItem === 'string') {
+      absPath = absolutePathOrItem;
+    } else if (absolutePathOrItem instanceof vscode.Uri || absolutePathOrItem.fsPath) {
+      absPath = absolutePathOrItem.fsPath;
+    } else if (absolutePathOrItem.resourceUri?.fsPath) {
+      absPath = absolutePathOrItem.resourceUri.fsPath;
+    } else if (absolutePathOrItem.changeItem?.localUri?.fsPath) {
+      absPath = absolutePathOrItem.changeItem.localUri.fsPath;
+    } else {
+      return null;
+    }
+
+    if (!absPath || typeof absPath !== 'string') return null;
+
     const root = this.getWorkspaceRoot();
     if (!root) return null;
-    const rel = path.relative(root, absolutePath);
-    if (rel.startsWith('..') || path.isAbsolute(rel)) return null;
-    return rel;
+
+    try {
+      const rel = path.relative(root, absPath);
+      if (rel.startsWith('..') || path.isAbsolute(rel)) return null;
+      return rel.split(path.sep).join('/');
+    } catch {
+      return null;
+    }
   }
 
   private initWatcher() {
@@ -275,3 +300,40 @@ export class ConfigManager {
     this._onDidChangeConfig.dispose();
   }
 }
+
+/**
+ * Universal URI resolver that extracts a valid vscode.Uri from various inputs
+ * passed by VS Code (TreeItems, command arguments, active editor, etc.)
+ */
+export function resolveTargetUri(arg?: any): vscode.Uri | undefined {
+  if (!arg) {
+    return vscode.window.activeTextEditor?.document.uri;
+  }
+
+  // 1. Direct vscode.Uri
+  if (arg instanceof vscode.Uri) {
+    return arg;
+  }
+  if (arg && typeof arg === 'object' && typeof arg.fsPath === 'string' && arg.fsPath.length > 0) {
+    return vscode.Uri.file(arg.fsPath);
+  }
+
+  // 2. TreeItem with resourceUri
+  if (arg.resourceUri && (arg.resourceUri instanceof vscode.Uri || typeof arg.resourceUri.fsPath === 'string')) {
+    return arg.resourceUri instanceof vscode.Uri ? arg.resourceUri : vscode.Uri.file(arg.resourceUri.fsPath);
+  }
+
+  // 3. TreeItem with changeItem.localUri
+  if (arg.changeItem?.localUri) {
+    const lUri = arg.changeItem.localUri;
+    return lUri instanceof vscode.Uri ? lUri : vscode.Uri.file(lUri.fsPath || String(lUri));
+  }
+
+  // 4. String path
+  if (typeof arg === 'string' && arg.trim().length > 0) {
+    return vscode.Uri.file(arg);
+  }
+
+  return vscode.window.activeTextEditor?.document.uri;
+}
+
