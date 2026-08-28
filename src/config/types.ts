@@ -20,6 +20,8 @@ export interface ServerConfig {
   algorithms?: any;
   connectTimeout?: number;
   remotePollingInterval?: number; // seconds
+  timeOffset?: number; // hours difference between server and local (e.g. -4, 2, 0)
+  timestampTolerance?: number; // seconds tolerance for timestamp comparison (default: 3)
 }
 
 export interface PendingChangeItem {

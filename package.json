@@ -416,6 +416,16 @@
           "type": "number",
           "default": 0,
           "description": "Interval in seconds to check server for remote modifications (0 to disable background polling)."
+        },
+        "deployment.timeOffset": {
+          "type": "number",
+          "default": 0,
+          "description": "Timezone offset in hours to add to the remote server timestamp to match local time (e.g. -4 if server is in UTC and client in GMT-4, or 0 if same timezone)."
+        },
+        "deployment.timestampTolerance": {
+          "type": "number",
+          "default": 3,
+          "description": "Tolerance in seconds when comparing file timestamps between local and remote (default: 3 seconds)."
         }
       }
     }

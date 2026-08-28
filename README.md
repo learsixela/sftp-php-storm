@@ -68,7 +68,9 @@ Edita tu archivo `.vscode/sftp.json` con los datos de tu servidor:
 | `uploadOnSave` | `true` para subir automáticamente el archivo cada vez que pulses `Ctrl + S`. |
 | `useGitIgnore` | `true` para excluir automáticamente del despliegue todos los archivos y carpetas listados en tu `.gitignore`. |
 | `ignore` | Lista adicional de patrones o carpetas a excluir (ej. `["node_modules", "cache/**", "*.log"]`). |
-| `remotePollingInterval` | *(Opcional)* Intervalo en segundos para comprobar cambios en el servidor en segundo plano (por defecto `60`, o `0` para desactivar). |
+| `remotePollingInterval` | *(Opcional)* Intervalo en segundos para comprobar cambios en el servidor en segundo plano (por defecto `0` / desactivado, o `60` para sondeo periódico). |
+| `timeOffset` | *(Opcional)* Desfase de zona horaria en horas a sumar/restar al servidor para alinearlo con tu hora local (ej. `-4` si el servidor está en UTC y tu máquina en GMT-4, por defecto `0`). |
+| `timestampTolerance` | *(Opcional)* Margen de tolerancia en segundos al comparar fechas de modificación entre local y remoto (por defecto `3` segundos). |
 
 ---
 

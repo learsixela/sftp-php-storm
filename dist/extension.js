@@ -26985,7 +26985,9 @@ var ConfigManager = class {
       webServerUrl: this.substituteEnvVars(raw.webServerUrl || "", root),
       algorithms: raw.algorithms,
       connectTimeout: raw.connectTimeout || 15e3,
-      remotePollingInterval: raw.remotePollingInterval !== void 0 ? Number(raw.remotePollingInterval) : 0
+      remotePollingInterval: raw.remotePollingInterval !== void 0 ? Number(raw.remotePollingInterval) : 0,
+      timeOffset: raw.timeOffset !== void 0 ? Number(raw.timeOffset) : vscode.workspace.getConfiguration("deployment").get("timeOffset", 0),
+      timestampTolerance: raw.timestampTolerance !== void 0 ? Number(raw.timestampTolerance) : vscode.workspace.getConfiguration("deployment").get("timestampTolerance", 3)
     };
   }
   /**
@@ -27771,7 +27773,9 @@ var RemoteMonitor = class {
           const sub = await this.scanRemote(root, remoteItemPath, config);
           results.push(...sub);
         } else {
-          const remoteMtimeMs = (item.modifyTime || 0) * 1e3;
+          const offsetMs = (config.timeOffset !== void 0 ? config.timeOffset : 0) * 3600 * 1e3;
+          const toleranceMs = (config.timestampTolerance !== void 0 ? config.timestampTolerance : 3) * 1e3;
+          const remoteMtimeMs = (item.modifyTime || 0) * 1e3 + offsetMs;
           if (!fs4.existsSync(localAbs)) {
             results.push({
               relativePath: relPath,
@@ -27786,7 +27790,7 @@ var RemoteMonitor = class {
             const localStat = fs4.statSync(localAbs);
             const sizeDiff = localStat.size !== item.size;
             const timeDiff = remoteMtimeMs - localStat.mtimeMs;
-            if (sizeDiff || timeDiff > 5e3) {
+            if (sizeDiff || timeDiff > toleranceMs) {
               results.push({
                 relativePath: relPath,
                 status: "remote_newer",
@@ -28677,10 +28681,12 @@ Protected files (.git, .vscode, .env, .gitignore) will never be touched.`;
       } else if (localE && remoteE) {
         const stat = fs6.statSync(localPath);
         const localMtime = stat.mtimeMs;
-        const remoteMtime = (remoteE.modifyTime || 0) * 1e3;
+        const offsetMs = (config.timeOffset !== void 0 ? config.timeOffset : 0) * 3600 * 1e3;
+        const toleranceMs = (config.timestampTolerance !== void 0 ? config.timestampTolerance : 3) * 1e3;
+        const remoteMtime = (remoteE.modifyTime || 0) * 1e3 + offsetMs;
         const sizeDiff = Math.abs(stat.size - remoteE.size);
         const timeDiff = remoteMtime - localMtime;
-        if (sizeDiff > 0 || timeDiff > 3e3) {
+        if (sizeDiff > 0 || timeDiff > toleranceMs) {
           toDownload.push({
             relativePath: relPath,
             localPath,
@@ -28801,15 +28807,17 @@ Protected files (.git, .vscode, .env, .gitignore) will never be touched.`;
       } else if (localE && remoteE) {
         const stat = fs6.statSync(localPath);
         const localMtime = stat.mtimeMs;
-        const remoteMtime = (remoteE.modifyTime || 0) * 1e3;
+        const offsetMs = (config.timeOffset !== void 0 ? config.timeOffset : 0) * 3600 * 1e3;
+        const toleranceMs = (config.timestampTolerance !== void 0 ? config.timestampTolerance : 3) * 1e3;
+        const remoteMtime = (remoteE.modifyTime || 0) * 1e3 + offsetMs;
         const sizeDiff = Math.abs(stat.size - remoteE.size);
         const timeDiff = localMtime - remoteMtime;
         let status = "same";
         if (sizeDiff > 0) {
-          status = timeDiff > 3e3 ? "local_newer" : timeDiff < -3e3 ? "remote_newer" : "different";
-        } else if (timeDiff > 3e3) {
+          status = timeDiff > toleranceMs ? "local_newer" : timeDiff < -toleranceMs ? "remote_newer" : "different";
+        } else if (timeDiff > toleranceMs) {
           status = "local_newer";
-        } else if (timeDiff < -3e3) {
+        } else if (timeDiff < -toleranceMs) {
           status = "remote_newer";
         }
         if (status !== "same") {

@@ -362,11 +362,13 @@ export class SyncEngine {
       } else if (localE && remoteE) {
         const stat = fs.statSync(localPath);
         const localMtime = stat.mtimeMs;
-        const remoteMtime = (remoteE.modifyTime || 0) * 1000;
+        const offsetMs = (config.timeOffset !== undefined ? config.timeOffset : 0) * 3600 * 1000;
+        const toleranceMs = (config.timestampTolerance !== undefined ? config.timestampTolerance : 3) * 1000;
+        const remoteMtime = ((remoteE.modifyTime || 0) * 1000) + offsetMs;
         const sizeDiff = Math.abs(stat.size - remoteE.size);
         const timeDiff = remoteMtime - localMtime;
 
-        if (sizeDiff > 0 || timeDiff > 3000) {
+        if (sizeDiff > 0 || timeDiff > toleranceMs) {
           toDownload.push({
             relativePath: relPath,
             localPath,
@@ -501,16 +503,18 @@ export class SyncEngine {
       } else if (localE && remoteE) {
         const stat = fs.statSync(localPath);
         const localMtime = stat.mtimeMs;
-        const remoteMtime = (remoteE.modifyTime || 0) * 1000;
+        const offsetMs = (config.timeOffset !== undefined ? config.timeOffset : 0) * 3600 * 1000;
+        const toleranceMs = (config.timestampTolerance !== undefined ? config.timestampTolerance : 3) * 1000;
+        const remoteMtime = ((remoteE.modifyTime || 0) * 1000) + offsetMs;
         const sizeDiff = Math.abs(stat.size - remoteE.size);
         const timeDiff = localMtime - remoteMtime;
 
         let status: SyncComparisonItem['status'] = 'same';
         if (sizeDiff > 0) {
-          status = timeDiff > 3000 ? 'local_newer' : timeDiff < -3000 ? 'remote_newer' : 'different';
-        } else if (timeDiff > 3000) {
+          status = timeDiff > toleranceMs ? 'local_newer' : timeDiff < -toleranceMs ? 'remote_newer' : 'different';
+        } else if (timeDiff > toleranceMs) {
           status = 'local_newer';
-        } else if (timeDiff < -3000) {
+        } else if (timeDiff < -toleranceMs) {
           status = 'remote_newer';
         }
 

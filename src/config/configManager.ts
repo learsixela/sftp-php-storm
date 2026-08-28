@@ -166,7 +166,9 @@ export class ConfigManager {
       webServerUrl: this.substituteEnvVars(raw.webServerUrl || '', root),
       algorithms: raw.algorithms,
       connectTimeout: raw.connectTimeout || 15000,
-      remotePollingInterval: raw.remotePollingInterval !== undefined ? Number(raw.remotePollingInterval) : 0
+      remotePollingInterval: raw.remotePollingInterval !== undefined ? Number(raw.remotePollingInterval) : 0,
+      timeOffset: raw.timeOffset !== undefined ? Number(raw.timeOffset) : vscode.workspace.getConfiguration('deployment').get<number>('timeOffset', 0),
+      timestampTolerance: raw.timestampTolerance !== undefined ? Number(raw.timestampTolerance) : vscode.workspace.getConfiguration('deployment').get<number>('timestampTolerance', 3)
     };
   }
 

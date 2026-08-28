@@ -107,7 +107,10 @@ export class RemoteMonitor {
           const sub = await this.scanRemote(root, remoteItemPath, config);
           results.push(...sub);
         } else {
-          const remoteMtimeMs = (item.modifyTime || 0) * 1000;
+          const offsetMs = (config.timeOffset !== undefined ? config.timeOffset : 0) * 3600 * 1000;
+          const toleranceMs = (config.timestampTolerance !== undefined ? config.timestampTolerance : 3) * 1000;
+          const remoteMtimeMs = ((item.modifyTime || 0) * 1000) + offsetMs;
+
           if (!fs.existsSync(localAbs)) {
             results.push({
               relativePath: relPath,
@@ -123,8 +126,8 @@ export class RemoteMonitor {
             const sizeDiff = localStat.size !== item.size;
             const timeDiff = remoteMtimeMs - localStat.mtimeMs;
 
-            // Only mark as remote change if file size differs or remote timestamp is significantly newer (> 5s)
-            if (sizeDiff || timeDiff > 5000) {
+            // Only mark as remote change if file size differs or remote timestamp is newer than tolerance
+            if (sizeDiff || timeDiff > toleranceMs) {
               results.push({
                 relativePath: relPath,
                 status: 'remote_newer',
