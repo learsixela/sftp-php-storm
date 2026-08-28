@@ -43,9 +43,40 @@ export function activate(context: vscode.ExtensionContext) {
   const pendingTreeProvider = new PendingChangesTreeProvider(changeTracker, remoteMonitor);
   const remoteTreeProvider = new RemoteExplorerTreeProvider(configManager, sftpManager);
 
-  vscode.window.registerTreeDataProvider('deployment-servers', serverTreeProvider);
-  vscode.window.registerTreeDataProvider('deployment-pending-changes', pendingTreeProvider);
-  vscode.window.registerTreeDataProvider('deployment-remote-explorer', remoteTreeProvider);
+  const serverTreeView = vscode.window.createTreeView('deployment-servers', {
+    treeDataProvider: serverTreeProvider
+  });
+  const pendingTreeView = vscode.window.createTreeView('deployment-pending-changes', {
+    treeDataProvider: pendingTreeProvider
+  });
+  const remoteTreeView = vscode.window.createTreeView('deployment-remote-explorer', {
+    treeDataProvider: remoteTreeProvider
+  });
+
+  context.subscriptions.push(serverTreeView, pendingTreeView, remoteTreeView);
+
+  const updateBadge = async () => {
+    try {
+      const local = await changeTracker.getPendingChanges();
+      const remote = remoteMonitor.getRemotePending();
+      const total = local.length + remote.length;
+      if (total > 0) {
+        pendingTreeView.badge = {
+          value: total,
+          tooltip: `${local.length} local change(s), ${remote.length} server change(s) pending`
+        };
+        pendingTreeView.description = `${total} pending`;
+      } else {
+        pendingTreeView.badge = undefined;
+        pendingTreeView.description = undefined;
+      }
+    } catch {}
+  };
+
+  changeTracker.onDidChangePending(() => updateBadge());
+  remoteMonitor.onDidChangeRemotePending(() => updateBadge());
+  configManager.onDidChangeConfig(() => updateBadge());
+  updateBadge();
 
   // Auto upload on save with incremental O(1) change notification
   vscode.workspace.onDidSaveTextDocument(async (doc) => {
