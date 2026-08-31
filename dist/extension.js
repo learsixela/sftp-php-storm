@@ -26939,21 +26939,42 @@ var ConfigManager = class {
   loadIgnoreFiles(root) {
     this.gitIgnoreRules = [];
     this.sftpIgnoreRules = [];
-    const gitIgnorePath = path.join(root, ".gitignore");
-    if (fs.existsSync(gitIgnorePath)) {
+    const gitIgnoreFiles = [];
+    const sftpIgnoreFiles = [];
+    let currentDir = root;
+    while (currentDir) {
+      const gitIgnorePath = path.join(currentDir, ".gitignore");
+      if (fs.existsSync(gitIgnorePath) && !gitIgnoreFiles.includes(gitIgnorePath)) {
+        gitIgnoreFiles.unshift(gitIgnorePath);
+      }
+      const sftpIgnorePath = path.join(currentDir, ".sftpignore");
+      const deploymentIgnorePath = path.join(currentDir, ".deploymentignore");
+      const ignorePath = fs.existsSync(sftpIgnorePath) ? sftpIgnorePath : fs.existsSync(deploymentIgnorePath) ? deploymentIgnorePath : null;
+      if (ignorePath && !sftpIgnoreFiles.includes(ignorePath)) {
+        sftpIgnoreFiles.unshift(ignorePath);
+      }
+      const gitDir = path.join(currentDir, ".git");
+      if (fs.existsSync(gitDir) && currentDir !== root) {
+        break;
+      }
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir)
+        break;
+      currentDir = parentDir;
+    }
+    for (const gPath of gitIgnoreFiles) {
       try {
-        const lines = fs.readFileSync(gitIgnorePath, "utf8").split(/\r?\n/);
-        this.gitIgnoreRules = lines.map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
+        const lines = fs.readFileSync(gPath, "utf8").split(/\r?\n/);
+        const rules = lines.map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
+        this.gitIgnoreRules.push(...rules);
       } catch {
       }
     }
-    const sftpIgnorePath = path.join(root, ".sftpignore");
-    const deploymentIgnorePath = path.join(root, ".deploymentignore");
-    const ignorePath = fs.existsSync(sftpIgnorePath) ? sftpIgnorePath : fs.existsSync(deploymentIgnorePath) ? deploymentIgnorePath : null;
-    if (ignorePath) {
+    for (const sPath of sftpIgnoreFiles) {
       try {
-        const lines = fs.readFileSync(ignorePath, "utf8").split(/\r?\n/);
-        this.sftpIgnoreRules = lines.map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
+        const lines = fs.readFileSync(sPath, "utf8").split(/\r?\n/);
+        const rules = lines.map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
+        this.sftpIgnoreRules.push(...rules);
       } catch {
       }
     }
@@ -27004,7 +27025,11 @@ var ConfigManager = class {
       return true;
     if (segments.includes(".git") || posixPath.startsWith(".git/"))
       return true;
-    if (segments.includes("node_modules"))
+    if (segments.includes("node_modules") || posixPath.startsWith("node_modules/"))
+      return true;
+    if (segments.includes(".angular") || posixPath.startsWith(".angular/"))
+      return true;
+    if (segments.includes(".next") || posixPath.startsWith(".next/"))
       return true;
     if (segments.includes("tools") || posixPath === "tools" || posixPath.startsWith("tools/"))
       return true;
@@ -27040,21 +27065,38 @@ var ConfigManager = class {
     return false;
   }
   matchRules(posixPath, segments, basename3, rules) {
-    for (const item of rules) {
-      const norm = item.split(path.sep).join("/").replace(/^\//, "").replace(/\/$/, "");
+    for (let item of rules) {
+      item = item.trim();
+      if (!item || item.startsWith("#"))
+        continue;
+      let norm = item.split(path.sep).join("/").replace(/^\//, "").replace(/\/$/, "");
       if (!norm)
         continue;
+      const cleanPrefix = norm.replace(/(\/\*+)+$/, "");
       if (posixPath === norm || posixPath.startsWith(norm + "/"))
         return true;
-      if (segments.includes(norm))
+      if (cleanPrefix && (posixPath === cleanPrefix || posixPath.startsWith(cleanPrefix + "/")))
         return true;
-      if (basename3 === norm)
+      if (segments.includes(norm) || cleanPrefix && segments.includes(cleanPrefix))
         return true;
+      if (basename3 === norm || basename3 === cleanPrefix)
+        return true;
+      if (norm.startsWith("**/")) {
+        const afterGlob = norm.slice(3).replace(/(\/\*+)+$/, "");
+        if (afterGlob) {
+          if (segments.includes(afterGlob) || posixPath.includes("/" + afterGlob) || posixPath.startsWith(afterGlob)) {
+            return true;
+          }
+        }
+      }
       if (norm.includes("*")) {
-        const regexStr = "^" + norm.replace(/\./g, "\\.").replace(/\*/g, ".*") + "$";
-        const regex = new RegExp(regexStr);
-        if (regex.test(posixPath) || regex.test(basename3) || segments.some((s) => regex.test(s))) {
-          return true;
+        const regexStr = "^" + norm.replace(/[-/\\^$+?.()|[\]{}]/g, "\\$&").replace(/\\\*\\\*/g, ".*").replace(/(?<!\.)\\\*/g, "[^/]*") + "$";
+        try {
+          const regex = new RegExp(regexStr);
+          if (regex.test(posixPath) || regex.test(basename3) || segments.some((s) => regex.test(s))) {
+            return true;
+          }
+        } catch {
         }
       }
     }
@@ -27580,7 +27622,7 @@ var ChangeTracker = class {
       let manifest = this.loadManifest();
       const files = this.walkDirectory(root, config.ignore);
       const pending = [];
-      if (!manifest) {
+      if (!manifest || Object.keys(manifest).length === 0) {
         const hashes = {};
         for (const rel of files) {
           const abs = path3.join(root, rel);

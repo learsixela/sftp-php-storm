@@ -223,7 +223,7 @@ export class ChangeTracker {
       const files = this.walkDirectory(root, config.ignore);
       const pending: PendingChangeItem[] = [];
 
-      if (!manifest) {
+      if (!manifest || Object.keys(manifest).length === 0) {
         // Auto-initialize baseline manifest on first scan so the workspace starts clean (0 pending changes).
         const hashes: Record<string, string> = {};
         for (const rel of files) {

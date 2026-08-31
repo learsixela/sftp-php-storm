@@ -119,22 +119,47 @@ export class ConfigManager {
     this.gitIgnoreRules = [];
     this.sftpIgnoreRules = [];
 
-    const gitIgnorePath = path.join(root, '.gitignore');
-    if (fs.existsSync(gitIgnorePath)) {
+    // Traverse upwards from root to find .gitignore and .sftpignore files in parent folders
+    const gitIgnoreFiles: string[] = [];
+    const sftpIgnoreFiles: string[] = [];
+
+    let currentDir = root;
+    while (currentDir) {
+      const gitIgnorePath = path.join(currentDir, '.gitignore');
+      if (fs.existsSync(gitIgnorePath) && !gitIgnoreFiles.includes(gitIgnorePath)) {
+        gitIgnoreFiles.unshift(gitIgnorePath);
+      }
+
+      const sftpIgnorePath = path.join(currentDir, '.sftpignore');
+      const deploymentIgnorePath = path.join(currentDir, '.deploymentignore');
+      const ignorePath = fs.existsSync(sftpIgnorePath) ? sftpIgnorePath : fs.existsSync(deploymentIgnorePath) ? deploymentIgnorePath : null;
+      if (ignorePath && !sftpIgnoreFiles.includes(ignorePath)) {
+        sftpIgnoreFiles.unshift(ignorePath);
+      }
+
+      const gitDir = path.join(currentDir, '.git');
+      if (fs.existsSync(gitDir) && currentDir !== root) {
+        break;
+      }
+
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) break;
+      currentDir = parentDir;
+    }
+
+    for (const gPath of gitIgnoreFiles) {
       try {
-        const lines = fs.readFileSync(gitIgnorePath, 'utf8').split(/\r?\n/);
-        this.gitIgnoreRules = lines.map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+        const lines = fs.readFileSync(gPath, 'utf8').split(/\r?\n/);
+        const rules = lines.map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+        this.gitIgnoreRules.push(...rules);
       } catch {}
     }
 
-    const sftpIgnorePath = path.join(root, '.sftpignore');
-    const deploymentIgnorePath = path.join(root, '.deploymentignore');
-    const ignorePath = fs.existsSync(sftpIgnorePath) ? sftpIgnorePath : fs.existsSync(deploymentIgnorePath) ? deploymentIgnorePath : null;
-
-    if (ignorePath) {
+    for (const sPath of sftpIgnoreFiles) {
       try {
-        const lines = fs.readFileSync(ignorePath, 'utf8').split(/\r?\n/);
-        this.sftpIgnoreRules = lines.map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+        const lines = fs.readFileSync(sPath, 'utf8').split(/\r?\n/);
+        const rules = lines.map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+        this.sftpIgnoreRules.push(...rules);
       } catch {}
     }
   }
@@ -181,11 +206,13 @@ export class ConfigManager {
     const basename = path.posix.basename(posixPath).toLowerCase();
     const segments = posixPath.toLowerCase().split('/');
 
-    // 1. Never upload .vscode configuration or credentials
+    // 1. Never upload VCS, editor settings or heavy build/package folders
     if (segments.includes('.vscode') || posixPath.startsWith('.vscode/')) return true;
     if (segments.includes('.idea') || posixPath.startsWith('.idea/')) return true;
     if (segments.includes('.git') || posixPath.startsWith('.git/')) return true;
-    if (segments.includes('node_modules')) return true;
+    if (segments.includes('node_modules') || posixPath.startsWith('node_modules/')) return true;
+    if (segments.includes('.angular') || posixPath.startsWith('.angular/')) return true;
+    if (segments.includes('.next') || posixPath.startsWith('.next/')) return true;
 
     // 2. Base omission of tools folder (local helper scripts, sftp-sync CLI, etc.)
     if (segments.includes('tools') || posixPath === 'tools' || posixPath.startsWith('tools/')) return true;
@@ -232,20 +259,42 @@ export class ConfigManager {
   }
 
   private matchRules(posixPath: string, segments: string[], basename: string, rules: string[]): boolean {
-    for (const item of rules) {
-      const norm = item.split(path.sep).join('/').replace(/^\//, '').replace(/\/$/, '');
+    for (let item of rules) {
+      item = item.trim();
+      if (!item || item.startsWith('#')) continue;
+
+      let norm = item.split(path.sep).join('/').replace(/^\//, '').replace(/\/$/, '');
       if (!norm) continue;
 
+      // Handle glob wildcard stripping for folder matches, e.g. "vendor/**", "vendor/*", "dist/**"
+      const cleanPrefix = norm.replace(/(\/\*+)+$/, '');
+
       if (posixPath === norm || posixPath.startsWith(norm + '/')) return true;
-      if (segments.includes(norm)) return true;
-      if (basename === norm) return true;
+      if (cleanPrefix && (posixPath === cleanPrefix || posixPath.startsWith(cleanPrefix + '/'))) return true;
+      if (segments.includes(norm) || (cleanPrefix && segments.includes(cleanPrefix))) return true;
+      if (basename === norm || basename === cleanPrefix) return true;
+
+      // Handle **/ prefix, e.g. "**/vendor/**", "**/dist"
+      if (norm.startsWith('**/')) {
+        const afterGlob = norm.slice(3).replace(/(\/\*+)+$/, '');
+        if (afterGlob) {
+          if (segments.includes(afterGlob) || posixPath.includes('/' + afterGlob) || posixPath.startsWith(afterGlob)) {
+            return true;
+          }
+        }
+      }
 
       if (norm.includes('*')) {
-        const regexStr = '^' + norm.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$';
-        const regex = new RegExp(regexStr);
-        if (regex.test(posixPath) || regex.test(basename) || segments.some(s => regex.test(s))) {
-          return true;
-        }
+        const regexStr = '^' + norm
+          .replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&')
+          .replace(/\\\*\\\*/g, '.*')
+          .replace(/(?<!\.)\\\*/g, '[^/]*') + '$';
+        try {
+          const regex = new RegExp(regexStr);
+          if (regex.test(posixPath) || regex.test(basename) || segments.some(s => regex.test(s))) {
+            return true;
+          }
+        } catch {}
       }
     }
     return false;
